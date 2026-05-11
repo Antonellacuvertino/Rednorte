@@ -10,6 +10,7 @@
     <description>Arquetipo Maven para microservicios backend de RedNorte.</description>
 
     <build>
+    
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
