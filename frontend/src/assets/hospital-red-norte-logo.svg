@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 210" role="img" aria-labelledby="title desc">
+  <title id="title">Hospital Red Norte</title>
+  <desc id="desc">Logo institucional de Hospital Red Norte con corazon, cruz medica y red de nodos.</desc>
+  <rect width="260" height="210" rx="22" fill="#ffffff"/>
+  <path d="M63 32c23-19 55-6 67 20 12-26 44-39 67-20 27 22 24 67-7 98l-60 58-60-58C39 99 36 54 63 32z" fill="#08aaa3"/>
+  <path d="M130 52c14-28 48-34 70-14 23 22 20 62-8 91l-62 59V52z" fill="#2fb84d"/>
+  <path d="M91 63h31V35h32v28h31v32h-31v31h-32V95H91V63z" fill="#ffffff"/>
+  <path d="M134 166c22-40 38-76 44-121" fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round"/>
+  <g fill="#0ba7a3" stroke="#ffffff" stroke-width="3">
+    <circle cx="191" cy="24" r="7"/>
+    <circle cx="216" cy="50" r="7"/>
+    <circle cx="198" cy="72" r="7"/>
+    <circle cx="224" cy="80" r="7"/>
+  </g>
+  <path d="M195 30l18 17m-16 23 16-16m-13 18 21 7" fill="none" stroke="#16984a" stroke-width="4" stroke-linecap="round"/>
+  <text x="130" y="165" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="800" fill="#142637">HOSPITAL</text>
+  <text x="130" y="190" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="800" letter-spacing="7" fill="#08aaa3">RED NORTE</text>
+</svg>

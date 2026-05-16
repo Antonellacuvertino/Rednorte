@@ -1,45 +1,57 @@
-# RedNorte Proyecto Fullstack
+# Hospital Red Norte - Gestion RedSalud
 
-Este proyecto contiene:
-- `frontend/`: aplicación React que consume el BFF.
-- `bff-rednorte/`: Backend For Frontend que integra `ms-pacientes` y `ms-citas`.
-- `ms-pacientes/`: microservicio de pacientes.
-- `ms-citas/`: microservicio de citas.
-- `maven-archetypes/backend-archetype/`: arquetipo Maven base para nuevos microservicios.
-- `docs/`: documentación de patrones, branching y repositorios.
+Sistema fullstack privado para gestion hospitalaria, construido con React, BFF Spring Boot y microservicios independientes.
 
-## Ejecución del sistema
-1. Iniciar `ms-pacientes`:
+## Modulos
+
+- `frontend/`: panel privado React + Vite para medicos RedSalud.
+- `bff-rednorte/`: Backend For Frontend en puerto `8085`.
+- `ms-pacientes/`: gestion de pacientes en puerto `8081`.
+- `ms-citas/`: agenda medica en puerto `8082`.
+- `ms-lista-espera/`: lista de espera priorizada en puerto `8083`.
+- `ms-reasignacion/`: reglas de reasignacion en puerto `8084`.
+- `maven-archetypes/backend-archetype/`: arquetipo Maven base.
+- `docs/`: documentacion para evaluacion, patrones, endpoints y evidencia.
+
+## Acceso privado
+
+La aplicacion ya no muestra secciones publicas. Primero se debe registrar un medico usando un correo que termine en `@redsalud.cl`; luego se inicia sesion y se habilita el panel completo.
+
+## Ejecucion rapida
+
 ```bash
-cd ms-pacientes
-mvn spring-boot:run
+iniciar-servicios.bat
 ```
-2. Iniciar `ms-citas`:
+
+URLs:
+
+- Frontend: `http://localhost:5173`
+- BFF: `http://localhost:8085`
+- Pacientes: `http://localhost:8081`
+- Citas: `http://localhost:8082`
+- Lista de espera: `http://localhost:8083`
+- Reasignacion: `http://localhost:8084`
+
+## Validacion
+
 ```bash
-cd ../ms-citas
-mvn spring-boot:run
-```
-3. Iniciar el BFF:
-```bash
+cd frontend
+npm test
+npm run build
+
 cd ../bff-rednorte
-mvn spring-boot:run
-```
-4. Iniciar el frontend:
-```bash
-cd ../frontend
-npm install
-npm run dev
+mvnw.cmd test
+
+cd ../ms-lista-espera
+mvnw.cmd test
+
+cd ../ms-reasignacion
+mvnw.cmd test
 ```
 
-## Puntos clave implementados
-- `ms-pacientes` ahora expone `GET /api/pacientes/{id}` y `GET /api/pacientes/rut/{rut}`.
-- `ms-citas` ofrece `GET /api/citas/paciente/{pacienteId}` usando Repository y Factory Method.
-- `bff-rednorte` agrega `GET /bff/pacientes` y `GET /bff/paciente-citas/{id}`.
-- `frontend/` usa React, Vite y pruebas unitarias con Vitest.
-- Se incluyeron documentos de patrones, branching y repositorios en `docs/`.
+## Documentacion clave
 
-## Documentación adicional
+- `docs/actualizacion_evaluacion_2.md`
+- `docs/checklist_evaluacion.md`
 - `docs/analisis_patrones_arquetipos.md`
 - `docs/plan_branching.md`
-- `docs/repositorios.txt`
-- `maven-archetypes/backend-archetype/README.md`

@@ -1,35 +1,35 @@
-# RedNorte Frontend
+# Frontend Hospital Red Norte
 
-Este es el componente frontend del proyecto RedNorte, construido con React y Vite.
+Aplicacion React + Vite para gestion privada RedSalud. La primera pantalla es autenticacion: registro de medico con dominio `@redsalud.cl` e inicio de sesion local para entrar al panel.
 
-## Requisitos
-- Node.js 18+ o superior
-- npm o yarn instalado
-- Backend BFF disponible en `http://localhost:8080`
+## Componentes principales
 
-## Instalación
+- `Login.jsx`: registro e inicio de sesion privado.
+- `PatientList.jsx`, `PatientDetail.jsx`, `PatientForm.jsx`: gestion de pacientes.
+- `CitasPublic.jsx`: agenda interna de citas.
+- `AppointmentForm.jsx`: creacion de citas.
+- `MicroservicesPanel.jsx`: vista de Lista de espera y reglas de reasignacion.
+
+## Ejecucion
+
 ```bash
-cd frontend
 npm install
-```
-
-## Ejecución en desarrollo
-```bash
 npm run dev
 ```
 
-Abre el navegador en `http://localhost:5173`.
+Frontend: `http://localhost:5173`
 
-## Pruebas unitarias
+## Conexion con BFF
+
+Por defecto consume `http://localhost:8085/bff`. Se puede cambiar con:
+
 ```bash
-npm run test
+VITE_API_BASE=http://localhost:8085/bff
 ```
 
-## Estructura
-- `src/` contiene los componentes y lógica principal.
-- `public/` puede contener recursos estáticos.
-- `package.json` define dependencias y scripts.
+## Pruebas
 
-## Conexión con Backend
-El frontend usa la API de BFF en `http://localhost:8080/bff`.
-Asegúrate de iniciar primero los microservicios `ms-pacientes`, `ms-citas` y `bff-rednorte`.
+```bash
+npm test
+npm run build
+```

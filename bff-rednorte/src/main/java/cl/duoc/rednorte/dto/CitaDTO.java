@@ -5,6 +5,9 @@ public class CitaDTO {
     private String fecha;
     private String hora;
     private Long pacienteId;
+    private String especialidad;
+    private String tipoCita;
+    private int prioridad;
 
     public CitaDTO() {
     }
@@ -46,5 +49,29 @@ public class CitaDTO {
 
     public void setPacienteId(Long pacienteId) {
         this.pacienteId = pacienteId;
+    }
+
+    public String getEspecialidad() {
+        return especialidad;
+    }
+
+    public void setEspecialidad(String especialidad) {
+        this.especialidad = especialidad;
+    }
+
+    public String getTipoCita() {
+        return tipoCita;
+    }
+
+    public void setTipoCita(String tipoCita) {
+        this.tipoCita = tipoCita;
+    }
+
+    public int getPrioridad() {
+        return prioridad;
+    }
+
+    public void setPrioridad(int prioridad) {
+        this.prioridad = prioridad;
     }
 }

@@ -7,6 +7,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import cl.duoc.rednorte.dto.CitaDTO;
 import cl.duoc.rednorte.dto.PacienteDTO;
 import cl.duoc.rednorte.feign.CitaClient;
+import cl.duoc.rednorte.feign.ListaEsperaClient;
+import cl.duoc.rednorte.feign.ReasignacionClient;
 import cl.duoc.rednorte.feign.PacienteClient;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +31,12 @@ class PacienteCitaControllerTest {
 
     @MockBean
     private CitaClient citaClient;
+
+    @MockBean
+    private ListaEsperaClient listaEsperaClient;
+
+    @MockBean
+    private ReasignacionClient reasignacionClient;
 
     @Test
     void testGetPacientes() throws Exception {

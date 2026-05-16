@@ -2,9 +2,9 @@
 
 ## Encargo grupal
 
-- Frontend NPM: cumple. Existe `frontend/package.json`, estructura `src/`, componentes React, README, scripts `dev`, `build` y `test`.
-- Backend For Frontend: cumple. Existe `bff-rednorte`, expone `/bff/pacientes` y `/bff/paciente-citas/{id}`, integra `ms-pacientes` y `ms-citas` con OpenFeign.
-- Microservicios: cumple. Existen `ms-pacientes` en puerto `8081` y `ms-citas` en puerto `8082`.
+- Frontend NPM: cumple. Existe `frontend/package.json`, estructura `src/`, componentes React, README, scripts `dev`, `build` y `test`. Incluye login/registro privado con dominio `@redsalud.cl`.
+- Backend For Frontend: cumple. Existe `bff-rednorte`, expone endpoints para pacientes, citas, lista de espera y reasignacion, integrando los microservicios con OpenFeign.
+- Microservicios: cumple. Existen `ms-pacientes` en puerto `8081`, `ms-citas` en puerto `8082`, `ms-lista-espera` en puerto `8083` y `ms-reasignacion` en puerto `8084`.
 - Arquetipo Maven: cumple. Existe `maven-archetypes/backend-archetype` con `pom.xml`, metadatos y README.
 - Patrones de diseno: cumple. Se evidencian Facade/Service y Container/Presentational en frontend; Repository, DTO/Adapter, Factory Method y BFF como Facade en backend.
 - Patrones arquitectonicos: cumple. Arquitectura BFF + microservicios, con separacion por responsabilidad.
@@ -14,13 +14,15 @@
 
 ## Validacion tecnica realizada
 
-- `npm.cmd test`: 1 test frontend OK.
+- `npm.cmd test`: test frontend OK.
 - `npm.cmd run build`: build frontend OK.
-- `bff-rednorte`: 3 tests OK.
-- `ms-pacientes`: 1 test OK.
-- `ms-citas`: 3 tests OK.
+- `bff-rednorte`: tests OK.
+- `ms-lista-espera`: tests OK.
+- `ms-reasignacion`: tests OK.
+- `ms-pacientes`: test base OK.
+- `ms-citas`: tests base OK.
 - BFF validado en vivo en `http://127.0.0.1:8085/bff/pacientes`.
-- Endpoint agregado validado en `http://127.0.0.1:8085/bff/paciente-citas/1`.
+- Endpoints agregados validados: `/bff/lista-espera/pendientes` y `/bff/reasignacion/reglas`.
 
 ## Riesgos antes de entregar
 

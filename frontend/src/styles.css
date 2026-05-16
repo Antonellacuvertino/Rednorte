@@ -11,9 +11,9 @@
   --border-strong: #cbd5e1;
   --text: #0f172a;
   --text-muted: #64748b;
-  --primary: #2563eb;
-  --primary-dark: #1d4ed8;
-  --primary-soft: #dbeafe;
+  --primary: #0f766e;
+  --primary-dark: #115e59;
+  --primary-soft: #ccfbf1;
   --success: #16a34a;
   --success-soft: #dcfce7;
   --danger: #dc2626;
@@ -35,7 +35,8 @@ body {
 
 button,
 input,
-textarea {
+textarea,
+select {
   font: inherit;
 }
 
@@ -54,7 +55,7 @@ button {
   top: 0;
   height: 100vh;
   padding: 1.25rem;
-  background: #0f3768;
+  background: #123c46;
   color: #ffffff;
   display: flex;
   flex-direction: column;
@@ -78,6 +79,16 @@ button {
   background: #ffffff;
   color: #0f3768;
   font-weight: 800;
+}
+
+.brand-logo {
+  width: 64px;
+  height: 64px;
+  flex: 0 0 auto;
+  border-radius: 14px;
+  object-fit: contain;
+  background: #ffffff;
+  padding: 0.25rem;
 }
 
 .brand strong,
@@ -145,6 +156,7 @@ button {
   border-radius: var(--radius);
   background: var(--surface);
   box-shadow: var(--shadow);
+  min-height: 132px;
 }
 
 .eyebrow {
@@ -176,7 +188,7 @@ button {
 }
 
 .topbar-actions {
-  min-width: 320px;
+  min-width: 220px;
 }
 
 .search-input {
@@ -243,6 +255,13 @@ button {
   grid-template-areas:
     "patients detail"
     "patients form";
+  gap: 1rem;
+  align-items: start;
+}
+
+.micro-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(360px, 1fr));
   gap: 1rem;
   align-items: start;
 }
@@ -494,7 +513,8 @@ button {
 }
 
 .field input,
-.field textarea {
+.field textarea,
+.field select {
   width: 100%;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -506,9 +526,37 @@ button {
 }
 
 .field input:focus,
-.field textarea:focus {
+.field textarea:focus,
+.field select:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 4px var(--primary-soft);
+}
+
+.split-actions,
+.inline-actions {
+  display: flex;
+  gap: 0.55rem;
+}
+
+.split-actions {
+  margin-top: 1rem;
+}
+
+.split-actions button,
+.inline-actions button {
+  min-height: 38px;
+  border-radius: 8px;
+  padding: 0 0.8rem;
+  background: var(--surface-muted);
+  color: var(--text);
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.split-actions button:hover,
+.inline-actions button:hover {
+  background: var(--primary-soft);
+  color: var(--primary-dark);
 }
 
 .primary-button {
@@ -569,6 +617,10 @@ button {
       "patients"
       "detail"
       "form";
+  }
+
+  .micro-grid {
+    grid-template-columns: 1fr;
   }
 }
 
