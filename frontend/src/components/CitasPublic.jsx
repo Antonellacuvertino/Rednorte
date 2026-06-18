@@ -1,64 +1,57 @@
 import { useEffect, useState } from 'react';
+import { CalendarRange } from 'lucide-react';
 import { fetchAllCitas } from '../hooks/usePatientApi';
 
-function CitasPublic() {
+function CitasPublic({ refreshKey = 0 }) {
   const [citas, setCitas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const loadCitas = async () => {
-      setLoading(true);
-      try {
-        const data = await fetchAllCitas();
+    setLoading(true);
+    fetchAllCitas()
+      .then((data) => {
         setCitas(data || []);
         setError('');
-      } catch (e) {
-        setError('No se pudieron cargar las citas internas.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadCitas();
-  }, []);
+      })
+      .catch(() => setError('No se pudo cargar la agenda.'))
+      .finally(() => setLoading(false));
+  }, [refreshKey]);
 
   return (
-    <div className="dashboard-grid">
-      <section className="panel public-panel">
-        <div className="panel-header">
-          <div>
-            <span className="eyebrow">Agenda medica</span>
-            <h2>Agenda disponible</h2>
-          </div>
+    <section className="panel">
+      <div className="panel-header">
+        <div>
+          <span className="section-kicker">Agenda vigente</span>
+          <h2>Proximas citas</h2>
+          <p className="panel-description">Bloques confirmados para el equipo clinico.</p>
         </div>
+        <CalendarRange size={22} />
+      </div>
 
-        {loading ? (
-          <div className="empty-state">
-            <strong>Cargando citas...</strong>
-          </div>
-        ) : error ? (
-          <div className="notice error">{error}</div>
-        ) : citas.length ? (
-          <div className="appointment-list">
-            {citas.map((cita) => (
-              <article className="appointment-card" key={cita.id}>
-                <div>
-                  <strong>{cita.fecha}</strong>
-                  <span>{cita.hora || 'Hora por confirmar'}</span>
-                </div>
-                <p>Paciente ID #{cita.pacienteId}</p>
-              </article>
-            ))}
-          </div>
-        ) : (
-          <div className="empty-state">
-            <strong>No hay citas disponibles</strong>
-            <span>Aun no hay citas registradas para el equipo medico.</span>
-          </div>
-        )}
-      </section>
-    </div>
+      {loading ? (
+        <div className="empty-state"><strong>Cargando citas...</strong></div>
+      ) : error ? (
+        <div className="notice error">{error}</div>
+      ) : citas.length ? (
+        <div className="appointment-list">
+          {citas.map((cita) => (
+            <article className="appointment-card" key={cita.id}>
+              <div>
+                <strong>{cita.fecha} - {cita.hora || 'Hora por confirmar'}</strong>
+                <span>{cita.especialidad || 'Medicina general'}</span>
+              </div>
+              <span className="appointment-id">Paciente #{cita.pacienteId}</span>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <div className="empty-state">
+          <strong>No hay citas programadas</strong>
+          <span>Utiliza el formulario para crear el primer bloque.</span>
+        </div>
+      )}
+    </section>
   );
 }
 

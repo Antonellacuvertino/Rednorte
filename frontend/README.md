@@ -1,35 +1,34 @@
 # Frontend Hospital Red Norte
 
-Aplicacion React + Vite para gestion privada RedSalud. La primera pantalla es autenticacion: registro de medico con dominio `@redsalud.cl` e inicio de sesion local para entrar al panel.
+Aplicacion React + Vite para la gestion privada de pacientes, citas, lista de
+espera, reasignacion, auditoria y notificaciones.
 
-## Componentes principales
+## Instalacion y ejecucion
 
-- `Login.jsx`: registro e inicio de sesion privado.
-- `PatientList.jsx`, `PatientDetail.jsx`, `PatientForm.jsx`: gestion de pacientes.
-- `CitasPublic.jsx`: agenda interna de citas.
-- `AppointmentForm.jsx`: creacion de citas.
-- `MicroservicesPanel.jsx`: vista de Lista de espera y reglas de reasignacion.
-
-## Ejecucion
-
-```bash
+```bat
 npm install
 npm run dev
 ```
 
-Frontend: `http://localhost:5173`
+El frontend se abre en `http://localhost:5173` y consume por defecto el BFF en
+`http://localhost:8085/bff`.
 
-## Conexion con BFF
+Para usar otra direccion:
 
-Por defecto consume `http://localhost:8085/bff`. Se puede cambiar con:
-
-```bash
+```text
 VITE_API_BASE=http://localhost:8085/bff
 ```
 
+La autenticacion se realiza contra `/auth/login` y `/auth/register`. El token
+Bearer se adjunta a cada solicitud protegida; las claves no se guardan en el
+navegador.
+
 ## Pruebas
 
-```bash
+```bat
 npm test
+npm run test:coverage
 npm run build
 ```
+
+El reporte Vitest se genera en `coverage/index.html`.

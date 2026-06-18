@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { createCita, fetchPatients } from '../hooks/usePatientApi';
-import './AppointmentForm.css';
 
 function AppointmentForm({ onAppointmentCreated }) {
   const [formData, setFormData] = useState({
@@ -81,14 +80,10 @@ function AppointmentForm({ onAppointmentCreated }) {
   };
 
   return (
-    <div className="appointment-form-container">
-      <div className="appointment-form-card">
-        <h3>Agendar Nueva Cita</h3>
-
-        <form onSubmit={handleSubmit} className="appointment-form">
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="pacienteId">Paciente:</label>
+    <form onSubmit={handleSubmit} className="patient-form">
+          <div className="form-grid">
+            <label className="field" htmlFor="pacienteId">
+              <span>Paciente</span>
               <select
                 id="pacienteId"
                 name="pacienteId"
@@ -103,10 +98,10 @@ function AppointmentForm({ onAppointmentCreated }) {
                   </option>
                 ))}
               </select>
-            </div>
+            </label>
 
-            <div className="form-group">
-              <label htmlFor="especialidad">Especialidad:</label>
+            <label className="field" htmlFor="especialidad">
+              <span>Especialidad</span>
               <select
                 id="especialidad"
                 name="especialidad"
@@ -119,12 +114,12 @@ function AppointmentForm({ onAppointmentCreated }) {
                   <option key={esp} value={esp}>{esp}</option>
                 ))}
               </select>
-            </div>
+            </label>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="fecha">Fecha:</label>
+          <div className="form-grid">
+            <label className="field" htmlFor="fecha">
+              <span>Fecha</span>
               <input
                 type="date"
                 id="fecha"
@@ -134,10 +129,10 @@ function AppointmentForm({ onAppointmentCreated }) {
                 min={new Date().toISOString().split('T')[0]}
                 required
               />
-            </div>
+            </label>
 
-            <div className="form-group">
-              <label htmlFor="hora">Hora:</label>
+            <label className="field" htmlFor="hora">
+              <span>Hora</span>
               <input
                 type="time"
                 id="hora"
@@ -146,11 +141,11 @@ function AppointmentForm({ onAppointmentCreated }) {
                 onChange={handleChange}
                 required
               />
-            </div>
+            </label>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="motivo">Motivo de la consulta:</label>
+          <label className="field" htmlFor="motivo">
+            <span>Motivo de la consulta</span>
             <textarea
               id="motivo"
               name="motivo"
@@ -160,14 +155,12 @@ function AppointmentForm({ onAppointmentCreated }) {
               rows="3"
               required
             />
-          </div>
+          </label>
 
-          <button type="submit" disabled={loading} className="submit-button">
+          <button type="submit" disabled={loading} className="primary-button">
             {loading ? 'Agendando...' : 'Agendar Cita'}
           </button>
         </form>
-      </div>
-    </div>
   );
 }
 

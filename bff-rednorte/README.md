@@ -1,62 +1,46 @@
 # BFF RedNorte
 
-Este es el microservicio BFF (Backend For Frontend) para el proyecto RedNorte, un sistema de gestión hospitalaria. Este servicio orquesta las llamadas a los microservicios `ms-pacientes` y `ms-citas`, proporcionando una interfaz unificada para el frontend.
+Punto de entrada seguro para el frontend. Orquesta los microservicios mediante
+OpenFeign y concentra autenticacion, cache y publicacion de eventos.
 
-## Estructura del Proyecto
+## Funciones
 
-El proyecto está organizado de la siguiente manera:
+- JWT firmado con HMAC y expiracion de 120 minutos.
+- Acceso a `/bff/**` limitado al rol `MEDICO`.
+- Registro institucional restringido a correos `@redsalud.cl`.
+- Claves almacenadas con BCrypt.
+- Cache Redis para pacientes y detalle paciente-citas.
+- Eventos de auditoria enviados a RabbitMQ.
 
-```
-bff-rednorte
-├── src
-│   ├── main
-│   │   ├── java
-│   │   │   └── cl
-│   │   │       └── duoc
-│   │   │           └── rednorte
-│   │   │               ├── BffRednorteApplication.java
-│   │   │               ├── controller
-│   │   │               │   └── PacienteCitaController.java
-│   │   │               ├── dto
-│   │   │               │   ├── PacienteDTO.java
-│   │   │               │   └── CitaDTO.java
-│   │   │               ├── mapper
-│   │   │               │   ├── PacienteMapper.java
-│   │   │               │   └── CitaMapper.java
-│   │   │               └── feign
-│   │   │                   ├── PacienteClient.java
-│   │   │                   └── CitaClient.java
-│   │   └── resources
-│   │       └── application.properties
-│   └── test
-│       └── java
-│           └── cl
-│               └── duoc
-│                   └── rednorte
-│                       └── controller
-│                           └── PacienteCitaControllerTest.java
-├── pom.xml
-└── README.md
+## Ejecucion
+
+Primero inicie Redis, RabbitMQ y los seis microservicios:
+
+```bat
+docker compose up -d
+cd bff-rednorte
+mvnw.cmd spring-boot:run
 ```
 
-## Requisitos
+Variables disponibles:
 
-- **Java 17** y **Spring Boot 3**.
-- Uso de **OpenFeign** para la comunicación con los microservicios.
-- Implementación de **DTOs** y **Mappers** para la transferencia de datos.
+```text
+JWT_SECRET
+DEMO_USER_NAME
+DEMO_USER_EMAIL
+DEMO_USER_PASSWORD
+REDIS_HOST
+REDIS_PORT
+RABBITMQ_HOST
+RABBITMQ_PORT
+RABBITMQ_USERNAME
+RABBITMQ_PASSWORD
+```
 
-## Instrucciones de Configuración
+## Pruebas
 
-1. Clona el repositorio en tu máquina local.
-2. Navega a la carpeta del proyecto.
-3. Ejecuta el comando `mvn clean install` para compilar el proyecto y descargar las dependencias.
-4. Configura las propiedades en `src/main/resources/application.properties` según sea necesario.
-5. Inicia la aplicación ejecutando `BffRednorteApplication.java`.
+```bat
+mvnw.cmd clean test
+```
 
-## Uso
-
-El BFF proporciona endpoints que combinan la información de pacientes y citas. Asegúrate de consultar la documentación de los endpoints en el controlador `PacienteCitaController.java` para más detalles sobre cómo interactuar con el servicio.
-
-## Contribuciones
-
-Las contribuciones son bienvenidas. Si deseas contribuir, por favor abre un issue o un pull request en el repositorio.
+Reporte JaCoCo: `target/site/jacoco/index.html`.

@@ -1,0 +1,490 @@
+openapi: 3.0.3
+info:
+  title: API BFF Hospital Red Norte
+  version: 3.0.0
+  description: Contrato REST consumido por el frontend de la Evaluacion 3.
+servers:
+  - url: http://localhost:8085
+tags:
+  - name: Autenticacion
+  - name: Pacientes
+  - name: Citas
+  - name: Lista de espera
+  - name: Reasignacion
+paths:
+  /auth/login:
+    post:
+      tags: [Autenticacion]
+      summary: Autenticar personal medico
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthRequest"
+            example:
+              email: medico@redsalud.cl
+              password: salud1234
+      responses:
+        "200":
+          description: Autenticacion correcta
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Credenciales invalidas
+  /auth/register:
+    post:
+      tags: [Autenticacion]
+      summary: Registrar un usuario institucional
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthRequest"
+            example:
+              name: Ana Torres
+              email: ana.torres@redsalud.cl
+              password: claveSegura2026
+      responses:
+        "201":
+          description: Usuario creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Datos invalidos o correo duplicado
+  /bff/pacientes:
+    get:
+      tags: [Pacientes]
+      summary: Listar pacientes
+      responses:
+        "200":
+          description: Listado obtenido
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Paciente"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [Pacientes]
+      summary: Crear paciente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Paciente"
+      responses:
+        "200":
+          description: Paciente creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Paciente"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /bff/paciente-citas/{id}:
+    get:
+      tags: [Pacientes, Citas]
+      summary: Obtener paciente y sus citas
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Vista combinada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  paciente:
+                    $ref: "#/components/schemas/Paciente"
+                  citas:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Cita"
+        "404":
+          description: Paciente no encontrado
+  /bff/citas:
+    get:
+      tags: [Citas]
+      summary: Listar citas
+      responses:
+        "200":
+          description: Listado obtenido
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Cita"
+    post:
+      tags: [Citas]
+      summary: Crear cita
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Cita"
+      responses:
+        "200":
+          description: Cita creada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cita"
+  /bff/lista-espera:
+    get:
+      tags: [Lista de espera]
+      summary: Listar registros de espera
+      responses:
+        "200":
+          description: Listado obtenido
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ListaEspera"
+    post:
+      tags: [Lista de espera]
+      summary: Crear registro de espera
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ListaEspera"
+      responses:
+        "200":
+          description: Registro creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListaEspera"
+  /bff/lista-espera/pendientes:
+    get:
+      tags: [Lista de espera]
+      summary: Listar pacientes pendientes
+      responses:
+        "200":
+          description: Registros pendientes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ListaEspera"
+  /bff/lista-espera/{id}/atender:
+    put:
+      tags: [Lista de espera]
+      summary: Marcar registro como atendido
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Registro actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListaEspera"
+  /bff/lista-espera/{id}/cancelar:
+    put:
+      tags: [Lista de espera]
+      summary: Cancelar registro
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Registro actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListaEspera"
+  /bff/reasignaciones:
+    get:
+      tags: [Reasignacion]
+      summary: Listar historial de reprogramaciones
+      responses:
+        "200":
+          description: Reprogramaciones ordenadas por fecha
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Reasignacion"
+    post:
+      tags: [Reasignacion]
+      summary: Reprogramar manualmente una cita
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [citaId, fechaNueva, horaNueva, motivo, medicoResponsable]
+              properties:
+                citaId:
+                  type: integer
+                  format: int64
+                fechaNueva:
+                  type: string
+                  format: date
+                horaNueva:
+                  type: string
+                  example: "15:30"
+                motivo:
+                  type: string
+                medicoResponsable:
+                  type: string
+      responses:
+        "200":
+          description: Cita actualizada y trazabilidad registrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reasignacion"
+        "400":
+          description: Datos incompletos o cita inexistente
+  /bff/auditoria:
+    get:
+      tags: [Auditoria]
+      summary: Consultar eventos persistidos por el microservicio de auditoria
+      parameters:
+        - name: tipo
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Eventos ordenados por fecha
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuditEvent"
+  /bff/notificaciones:
+    get:
+      tags: [Notificaciones]
+      summary: Consultar notificaciones operativas
+      parameters:
+        - name: noLeidas
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: Notificaciones ordenadas por fecha
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+  /bff/notificaciones/{id}/leer:
+    put:
+      tags: [Notificaciones]
+      summary: Marcar una notificacion como leida
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Notificacion actualizada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+  responses:
+    Unauthorized:
+      description: JWT ausente, invalido o expirado
+  schemas:
+    AuthRequest:
+      type: object
+      required: [email, password]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          minLength: 8
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        tokenType:
+          type: string
+          example: Bearer
+        expiresIn:
+          type: integer
+          example: 7200
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          example: medico
+        registeredUsers:
+          type: integer
+    Paciente:
+      type: object
+      required: [nombre, apellido, rut]
+      properties:
+        id:
+          type: integer
+          format: int64
+          readOnly: true
+        nombre:
+          type: string
+        apellido:
+          type: string
+        rut:
+          type: string
+        historialClinico:
+          type: string
+    Cita:
+      type: object
+      required: [fecha, hora, pacienteId]
+      properties:
+        id:
+          type: integer
+          format: int64
+          readOnly: true
+        fecha:
+          type: string
+          example: 2026-06-20
+        hora:
+          type: string
+          example: "10:30"
+        pacienteId:
+          type: integer
+          format: int64
+        especialidad:
+          type: string
+        tipoCita:
+          type: string
+          example: GENERAL
+        prioridad:
+          type: integer
+    ListaEspera:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          readOnly: true
+        pacienteId:
+          type: integer
+          format: int64
+        especialidad:
+          type: string
+        prioridad:
+          type: string
+        fechaRegistro:
+          type: string
+          format: date-time
+        fechaAtencion:
+          type: string
+          format: date-time
+        estado:
+          type: string
+        observaciones:
+          type: string
+    Reasignacion:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          readOnly: true
+        citaId:
+          type: integer
+          format: int64
+        pacienteId:
+          type: integer
+          format: int64
+        fechaAnterior:
+          type: string
+        horaAnterior:
+          type: string
+        fechaNueva:
+          type: string
+        horaNueva:
+          type: string
+        motivo:
+          type: string
+        medicoResponsable:
+          type: string
+        estado:
+          type: string
+        fechaRegistro:
+          type: string
+          format: date-time
+    AuditEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        eventType:
+          type: string
+        occurredAt:
+          type: string
+          format: date-time
+        receivedAt:
+          type: string
+          format: date-time
+        payload:
+          type: string
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        eventType:
+          type: string
+        title:
+          type: string
+        message:
+          type: string
+        readFlag:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+security:
+  - bearerAuth: []

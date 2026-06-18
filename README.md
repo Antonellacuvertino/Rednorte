@@ -1,57 +1,75 @@
-# Hospital Red Norte - Gestion RedSalud
+# Hospital Red Norte - Evaluacion 3 Fullstack III
 
-Sistema fullstack privado para gestion hospitalaria, construido con React, BFF Spring Boot y microservicios independientes.
+Sistema de gestion hospitalaria basado en React, un BFF Spring Boot y cuatro
+microservicios con persistencia independiente.
 
-## Modulos
+## Arquitectura
 
-- `frontend/`: panel privado React + Vite para medicos RedSalud.
-- `bff-rednorte/`: Backend For Frontend en puerto `8085`.
-- `ms-pacientes/`: gestion de pacientes en puerto `8081`.
-- `ms-citas/`: agenda medica en puerto `8082`.
-- `ms-lista-espera/`: lista de espera priorizada en puerto `8083`.
-- `ms-reasignacion/`: reglas de reasignacion en puerto `8084`.
-- `maven-archetypes/backend-archetype/`: arquetipo Maven base.
-- `docs/`: documentacion para evaluacion, patrones, endpoints y evidencia.
+| Componente | Puerto | Responsabilidad |
+| --- | ---: | --- |
+| Frontend React | 5173 | Interfaz privada para personal medico |
+| BFF RedNorte | 8085 | Seguridad JWT, cache, mensajeria y orquestacion |
+| MS Pacientes | 8081 | Datos e historial de pacientes |
+| MS Citas | 8082 | Agenda y tipos de citas |
+| MS Lista Espera | 8083 | Priorizacion y estados de espera |
+| MS Reasignacion | 8084 | Reprogramacion manual y trazabilidad de citas |
+| MS Auditoria | 8086 | Consumo y persistencia de eventos |
+| MS Notificaciones | 8087 | Avisos operativos generados por eventos |
+| Redis | 6379 | Cache de consultas frecuentes |
+| RabbitMQ | 5672/15672 | Eventos de auditoria y consola de administracion |
 
-## Acceso privado
+## Requisitos
 
-La aplicacion ya no muestra secciones publicas. Primero se debe registrar un medico usando un correo que termine en `@redsalud.cl`; luego se inicia sesion y se habilita el panel completo.
+- Java 17 o superior
+- Node.js 20 o superior
+- Docker Desktop
 
-## Ejecucion rapida
+## Ejecucion
 
-```bash
+```bat
 iniciar-servicios.bat
 ```
 
-URLs:
+El script levanta Docker, instala NPM con `npm ci` cuando sea necesario,
+inicia los seis microservicios, el BFF y React.
 
-- Frontend: `http://localhost:5173`
-- BFF: `http://localhost:8085`
-- Pacientes: `http://localhost:8081`
-- Citas: `http://localhost:8082`
-- Lista de espera: `http://localhost:8083`
-- Reasignacion: `http://localhost:8084`
+Acceso de demostracion:
 
-## Validacion
+- Correo: `medico@redsalud.cl`
+- Clave: `salud1234`
 
-```bash
-cd frontend
-npm test
-npm run build
+La clave JWT debe configurarse mediante `JWT_SECRET` fuera de desarrollo.
 
-cd ../bff-rednorte
-mvnw.cmd test
+## Pruebas y cobertura
 
-cd ../ms-lista-espera
-mvnw.cmd test
-
-cd ../ms-reasignacion
-mvnw.cmd test
+```bat
+ejecutar-pruebas.bat
 ```
 
-## Documentacion clave
+Los reportes backend quedan en `<servicio>/target/site/jacoco/index.html` y el
+reporte frontend en `frontend/coverage/index.html`.
 
-- `docs/actualizacion_evaluacion_2.md`
-- `docs/checklist_evaluacion.md`
-- `docs/analisis_patrones_arquetipos.md`
-- `docs/plan_branching.md`
+## Orden de arranque manual
+
+1. Redis y RabbitMQ.
+2. Los seis microservicios.
+3. BFF.
+4. Frontend.
+
+Los comandos exactos y la explicacion para defender la solucion estan en
+`docs/guia_ejecucion_y_defensa.md`.
+
+Para borrar dependencias, compilados, bases locales y reportes generados:
+
+```bat
+limpiar-generados.bat
+```
+
+## Documentacion de entrega
+
+- [Arquitectura](docs/evaluacion3_arquitectura.md)
+- [Persistencia](docs/evaluacion3_persistencia.md)
+- [Seguridad e integracion](docs/evaluacion3_seguridad_integracion.md)
+- [Informe de pruebas](docs/evaluacion3_pruebas.md)
+- [Contrato OpenAPI](docs/openapi-rednorte.yaml)
+- [Repositorios](docs/repositorios_evaluacion3.txt)

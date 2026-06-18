@@ -15,6 +15,8 @@ import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -69,5 +71,37 @@ class ListaEsperaControllerTest {
         mockMvc.perform(put("/api/lista-espera/1/atender"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.estado").value("ATENDIDO"));
+    }
+
+    @Test
+    void consultaFiltrosYCancelaRegistro() throws Exception {
+        ListaEspera registro = new ListaEspera(4L, "CARDIOLOGIA", "ALTA");
+        when(listaEsperaRepository.findAll()).thenReturn(List.of(registro));
+        when(listaEsperaRepository.findPendientesPorEspecialidadOrdenadasPorPrioridad("CARDIOLOGIA"))
+                .thenReturn(List.of(registro));
+        when(listaEsperaRepository.findByPacienteId(4L)).thenReturn(List.of(registro));
+        when(listaEsperaRepository.findById(4L)).thenReturn(Optional.of(registro));
+        when(listaEsperaRepository.save(any(ListaEspera.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        mockMvc.perform(get("/api/lista-espera")).andExpect(status().isOk());
+        mockMvc.perform(get("/api/lista-espera/pendientes/CARDIOLOGIA")).andExpect(status().isOk());
+        mockMvc.perform(get("/api/lista-espera/paciente/4")).andExpect(status().isOk());
+        mockMvc.perform(put("/api/lista-espera/4/cancelar"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("CANCELADO"));
+    }
+
+    @Test
+    void retornaNotFoundYEliminaExistente() throws Exception {
+        when(listaEsperaRepository.findById(99L)).thenReturn(Optional.empty());
+        when(listaEsperaRepository.existsById(1L)).thenReturn(true);
+        when(listaEsperaRepository.existsById(99L)).thenReturn(false);
+
+        mockMvc.perform(put("/api/lista-espera/99/atender")).andExpect(status().isNotFound());
+        mockMvc.perform(put("/api/lista-espera/99/cancelar")).andExpect(status().isNotFound());
+        mockMvc.perform(delete("/api/lista-espera/1")).andExpect(status().isOk());
+        mockMvc.perform(delete("/api/lista-espera/99")).andExpect(status().isNotFound());
+
+        verify(listaEsperaRepository).deleteById(1L);
     }
 }

@@ -1,14 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
+import { loginDoctor, registerDoctor } from '../hooks/usePatientApi';
 import logo from '../assets/hospital-red-norte-logo.svg';
 import './Login.css';
 
-const DOCTORS_KEY = 'redsalud-doctors';
 const EMAIL_DOMAIN = '@redsalud.cl';
-
-const getDoctors = () => {
-  const stored = localStorage.getItem(DOCTORS_KEY);
-  return stored ? JSON.parse(stored) : [];
-};
 
 function Login({ onLogin, error: externalError }) {
   const [mode, setMode] = useState('login');
@@ -24,31 +19,33 @@ function Login({ onLogin, error: externalError }) {
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [registeredUsers, setRegisteredUsers] = useState(1);
 
-  const doctors = useMemo(getDoctors, [mode, success]);
-
-  const handleLoginSubmit = (event) => {
+  const handleLoginSubmit = async (event) => {
     event.preventDefault();
     setError('');
     setSuccess('');
 
     const email = credentials.email.trim().toLowerCase();
-    const doctor = getDoctors().find((item) => item.email === email);
 
     if (!email.endsWith(EMAIL_DOMAIN)) {
       setError('Usa tu correo institucional @redsalud.cl.');
       return;
     }
 
-    if (!doctor || doctor.password !== credentials.password) {
-      setError('Cuenta no encontrada o credenciales incorrectas.');
-      return;
+    try {
+      const auth = await loginDoctor({
+        email,
+        password: credentials.password
+      });
+      setRegisteredUsers(auth.registeredUsers);
+      onLogin({ name: auth.name, email: auth.email, role: auth.role, token: auth.token });
+    } catch (e) {
+      setError('Cuenta no encontrada, credenciales incorrectas o BFF no disponible.');
     }
-
-    onLogin({ name: doctor.name, email: doctor.email, role: 'medico' });
   };
 
-  const handleRegisterSubmit = (event) => {
+  const handleRegisterSubmit = async (event) => {
     event.preventDefault();
     setError('');
     setSuccess('');
@@ -66,8 +63,8 @@ function Login({ onLogin, error: externalError }) {
       return;
     }
 
-    if (registerData.password.length < 6) {
-      setError('La contrasena debe tener al menos 6 caracteres.');
+    if (registerData.password.length < 8) {
+      setError('La contrasena debe tener al menos 8 caracteres.');
       return;
     }
 
@@ -76,22 +73,16 @@ function Login({ onLogin, error: externalError }) {
       return;
     }
 
-    const currentDoctors = getDoctors();
-    if (currentDoctors.some((item) => item.email === email)) {
-      setError('Esta cuenta ya esta registrada. Inicia sesion.');
+    try {
+      const auth = await registerDoctor({ name, email, password: registerData.password });
+      setRegisteredUsers(auth.registeredUsers);
+      setCredentials({ email, password: '' });
+      setRegisterData({ name: '', email: '', password: '', confirmPassword: '' });
+      setSuccess('Registro protegido creado. Ahora inicia sesion.');
       setMode('login');
-      return;
+    } catch (e) {
+      setError('No se pudo registrar. El correo puede existir o el BFF no esta disponible.');
     }
-
-    localStorage.setItem(DOCTORS_KEY, JSON.stringify([
-      ...currentDoctors,
-      { name, email, password: registerData.password }
-    ]));
-
-    setCredentials({ email, password: '' });
-    setRegisterData({ name: '', email: '', password: '', confirmPassword: '' });
-    setSuccess('Registro creado. Ahora inicia sesion con tu correo institucional.');
-    setMode('login');
   };
 
   return (
@@ -107,7 +98,7 @@ function Login({ onLogin, error: externalError }) {
         </div>
         <div className="auth-summary">
           <article>
-            <strong>{doctors.length}</strong>
+            <strong>{registeredUsers}</strong>
             <span>medicos registrados</span>
           </article>
           <article>

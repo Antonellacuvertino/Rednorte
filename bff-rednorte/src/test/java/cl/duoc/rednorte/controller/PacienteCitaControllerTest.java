@@ -7,10 +7,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import cl.duoc.rednorte.dto.CitaDTO;
 import cl.duoc.rednorte.dto.PacienteDTO;
 import cl.duoc.rednorte.feign.CitaClient;
+import cl.duoc.rednorte.feign.AuditClient;
 import cl.duoc.rednorte.feign.ListaEsperaClient;
 import cl.duoc.rednorte.feign.ReasignacionClient;
 import cl.duoc.rednorte.feign.PacienteClient;
+import cl.duoc.rednorte.feign.NotificationClient;
+import cl.duoc.rednorte.messaging.AuditEventPublisher;
+import cl.duoc.rednorte.security.JwtService;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -21,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 
 @WebMvcTest(PacienteCitaController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class PacienteCitaControllerTest {
 
     @Autowired
@@ -37,6 +43,18 @@ class PacienteCitaControllerTest {
 
     @MockBean
     private ReasignacionClient reasignacionClient;
+
+    @MockBean
+    private AuditEventPublisher auditEventPublisher;
+
+    @MockBean
+    private AuditClient auditClient;
+
+    @MockBean
+    private NotificationClient notificationClient;
+
+    @MockBean
+    private JwtService jwtService;
 
     @Test
     void testGetPacientes() throws Exception {

@@ -1,30 +1,63 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  CalendarDays,
+  ClipboardList,
+  FileBarChart,
+  LogOut,
+  Settings,
+  Stethoscope,
+  UsersRound
+} from 'lucide-react';
+import {
   createPatient,
-  fetchAllCitas,
   fetchPatientWithCitas,
-  fetchPatients
+  fetchPatients,
+  setAuthToken
 } from './hooks/usePatientApi';
-import PatientList from './components/PatientList';
+import AppointmentForm from './components/AppointmentForm';
+import CitasPublic from './components/CitasPublic';
+import Login from './components/Login';
+import MicroservicesPanel from './components/MicroservicesPanel';
 import PatientDetail from './components/PatientDetail';
 import PatientForm from './components/PatientForm';
-import Login from './components/Login';
-import CitasPublic from './components/CitasPublic';
-import AppointmentForm from './components/AppointmentForm';
-import MicroservicesPanel from './components/MicroservicesPanel';
+import PatientList from './components/PatientList';
+import ReassignmentPanel from './components/ReassignmentPanel';
+import SettingsPanel from './components/SettingsPanel';
 import logo from './assets/hospital-red-norte-logo.svg';
 
 const AUTH_USER_KEY = 'rednorte-user';
-const protectedPages = ['citas', 'pacientes', 'lista-espera', 'reportes', 'configuracion'];
+const SETTINGS_KEY = 'rednorte-settings';
+const defaultSettings = {
+  compactMode: false,
+  showNotifications: true,
+  autoRefresh: false,
+  highContrast: false
+};
+
+const pages = [
+  { id: 'citas', label: 'Citas', icon: CalendarDays },
+  { id: 'pacientes', label: 'Pacientes', icon: UsersRound },
+  { id: 'lista-espera', label: 'Lista de espera', icon: ClipboardList },
+  { id: 'reportes', label: 'Reportes', icon: FileBarChart },
+  { id: 'configuracion', label: 'Configuracion', icon: Settings }
+];
+
+const pageMeta = {
+  citas: ['Agenda clinica', 'Citas y reprogramaciones del equipo medico.'],
+  pacientes: ['Pacientes', 'Fichas clinicas, historial y nuevas admisiones.'],
+  'lista-espera': ['Operacion hospitalaria', 'Lista priorizada, avisos y trazabilidad del sistema.'],
+  reportes: ['Reportes', 'Resumen de actividad para seguimiento asistencial.'],
+  configuracion: ['Configuracion', 'Preferencias personales del panel clinico.']
+};
 
 function App() {
   const [user, setUser] = useState(() => {
     const stored = localStorage.getItem(AUTH_USER_KEY);
-    return stored ? JSON.parse(stored) : null;
+    const storedUser = stored ? JSON.parse(stored) : null;
+    if (storedUser?.token) setAuthToken(storedUser.token);
+    return storedUser;
   });
   const [activePage, setActivePage] = useState('pacientes');
-  const [redirectPage, setRedirectPage] = useState(null);
-  const [authError, setAuthError] = useState('');
   const [patients, setPatients] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [citas, setCitas] = useState([]);
@@ -33,43 +66,15 @@ function App() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [agendaVersion, setAgendaVersion] = useState(0);
+  const [settings, setSettings] = useState(() => {
+    const stored = localStorage.getItem(SETTINGS_KEY);
+    return stored ? { ...defaultSettings, ...JSON.parse(stored) } : defaultSettings;
+  });
 
-  const goToPage = (page) => {
-    if (protectedPages.includes(page) && !user) {
-      setRedirectPage(page);
-      setAuthError('Solo médicos pueden acceder a esta sección.');
-      setActivePage('pacientes');
-      return;
-    }
-
-    setError('');
-    setSuccess('');
-    setAuthError('');
-    setActivePage(page);
-  };
-
-  const handleLogin = (userData) => {
-    const authUser = { role: 'medico', name: 'Medico RedSalud', ...userData };
-    setUser(authUser);
-    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(authUser));
-    setActivePage(redirectPage || 'pacientes');
-    setRedirectPage(null);
-    setAuthError('');
-  };
-
-  const handleAppointmentCreated = (appointment) => {
-    setSuccess('Cita agendada exitosamente.');
-    setError('');
-  };
-
-  const handleLogout = () => {
-    setUser(null);
-    localStorage.removeItem(AUTH_USER_KEY);
-    setActivePage('pacientes');
-    setError('');
-    setSuccess('');
-    setAuthError('');
-  };
+  useEffect(() => {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  }, [settings]);
 
   const loadPatients = async () => {
     setLoading(true);
@@ -77,7 +82,7 @@ function App() {
       const data = await fetchPatients();
       setPatients(data || []);
       setError('');
-    } catch (e) {
+    } catch {
       setError('No se pudo cargar la lista de pacientes.');
     } finally {
       setLoading(false);
@@ -85,33 +90,40 @@ function App() {
   };
 
   useEffect(() => {
-    if (activePage === 'pacientes') {
-      loadPatients();
-    }
-  }, [activePage]);
+    if (user && activePage === 'pacientes') loadPatients();
+  }, [activePage, user]);
 
   const filteredPatients = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
-    if (!term) {
-      return patients;
-    }
-
+    if (!term) return patients;
     return patients.filter((patient) => {
       const fullName = `${patient.nombre} ${patient.apellido}`.toLowerCase();
       return fullName.includes(term) || patient.rut?.toLowerCase().includes(term);
     });
   }, [patients, searchTerm]);
 
+  const handleLogin = (userData) => {
+    const authUser = { role: 'medico', name: 'Medico RedSalud', ...userData };
+    setAuthToken(authUser.token);
+    setUser(authUser);
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(authUser));
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    setAuthToken(null);
+    localStorage.removeItem(AUTH_USER_KEY);
+    setActivePage('pacientes');
+  };
+
   const handleSelectPatient = async (patientId) => {
     setLoading(true);
-    setSelectedPatient(null);
-    setCitas([]);
     try {
       const data = await fetchPatientWithCitas(patientId);
       setSelectedPatient(data.paciente);
       setCitas(data.citas || []);
       setError('');
-    } catch (e) {
+    } catch {
       setError('No se pudieron cargar los detalles del paciente.');
     } finally {
       setLoading(false);
@@ -120,220 +132,144 @@ function App() {
 
   const handleCreatePatient = async (patient) => {
     setSaving(true);
-    setSuccess('');
     try {
-      const createdPatient = await createPatient(patient);
+      const created = await createPatient(patient);
       await loadPatients();
-      await handleSelectPatient(createdPatient.id);
+      await handleSelectPatient(created.id);
       setSuccess('Paciente agregado correctamente.');
       setError('');
-    } catch (e) {
+    } catch {
       setError('No se pudo agregar el paciente.');
     } finally {
       setSaving(false);
     }
   };
 
-  if (!user) {
-    return <Login onLogin={handleLogin} error={authError} />;
-  }
+  if (!user) return <Login onLogin={handleLogin} error="" />;
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${settings.compactMode ? 'compact-mode' : ''} ${settings.highContrast ? 'high-contrast' : ''}`}>
       <aside className="sidebar">
         <div className="brand">
           <img src={logo} alt="Hospital Red Norte" className="brand-logo" />
           <div>
             <strong>Hospital Red Norte</strong>
-            <span>Gestion RedSalud</span>
+            <span>Gestion clinica</span>
           </div>
         </div>
 
         <nav className="nav-menu" aria-label="Navegacion principal">
-          <a
-            className={`nav-item ${activePage === 'citas' ? 'active' : ''}`}
-            href="#!"
-            onClick={() => goToPage('citas')}
-          >
-            Citas
-          </a>
-          <a
-            className={`nav-item ${activePage === 'pacientes' ? 'active' : ''}`}
-            href="#!"
-            onClick={() => goToPage('pacientes')}
-          >
-            Pacientes
-          </a>
-          <a
-            className={`nav-item ${activePage === 'lista-espera' ? 'active' : ''}`}
-            href="#!"
-            onClick={() => goToPage('lista-espera')}
-          >
-            Lista de espera
-          </a>
-          <a
-            className={`nav-item ${activePage === 'reportes' ? 'active' : ''}`}
-            href="#!"
-            onClick={() => goToPage('reportes')}
-          >
-            Reportes
-          </a>
-          <a
-            className={`nav-item ${activePage === 'configuracion' ? 'active' : ''}`}
-            href="#!"
-            onClick={() => goToPage('configuracion')}
-          >
-            Configuración
-          </a>
+          {pages.map(({ id, label, icon: Icon }) => (
+            <button
+              className={`nav-item ${activePage === id ? 'active' : ''}`}
+              type="button"
+              key={id}
+              onClick={() => {
+                setActivePage(id);
+                setError('');
+                setSuccess('');
+              }}
+            >
+              <Icon size={18} />
+              <span>{label}</span>
+            </button>
+          ))}
         </nav>
 
-        <div className="sidebar-status">
-          <span className="status-dot"></span>
-          {user.name}
+        <div className="sidebar-footer">
+          <div className="user-summary">
+            <span className="user-avatar"><Stethoscope size={18} /></span>
+            <span>
+              <strong>{user.name}</strong>
+              <small>Sesion medica activa</small>
+            </span>
+          </div>
+          <button className="logout-button" type="button" onClick={handleLogout}>
+            <LogOut size={18} />
+            <span>Cerrar sesion</span>
+          </button>
         </div>
       </aside>
 
       <div className="workspace">
         <header className="topbar">
           <div>
-            <span className="eyebrow">Panel operativo</span>
-            <h1>Gestion Hospital Red Norte</h1>
-            <p>
-              {activePage === 'citas'
-                ? 'Agenda interna para revisar y crear citas medicas.'
-                : activePage === 'lista-espera'
-                ? 'Gestion priorizada de pacientes en espera y reglas de reasignacion.'
-                : 'Panel privado para medicos con acceso a pacientes, citas, reportes y configuracion.'}
-            </p>
-          </div>
-
-          <div className="topbar-actions">
-            <button className="primary-button" type="button" onClick={handleLogout}>
-              Cerrar sesion
-            </button>
+            <span className="eyebrow">Hospital Red Norte</span>
+            <h1>{pageMeta[activePage][0]}</h1>
+            <p>{pageMeta[activePage][1]}</p>
           </div>
         </header>
 
-        {authError && <div className="notice error">{authError}</div>}
-
         {activePage === 'citas' ? (
           <>
-            <CitasPublic />
-            <section className="dashboard-grid">
-              <section className="panel form-panel">
+            <section className="schedule-grid">
+              <CitasPublic refreshKey={agendaVersion} />
+              <section className="panel">
                 <div className="panel-header">
                   <div>
-                    <span className="eyebrow">Agenda medica</span>
-                    <h2>Formulario de citas</h2>
+                    <span className="section-kicker">Nuevo bloque</span>
+                    <h2>Agendar cita</h2>
                   </div>
                 </div>
-                <AppointmentForm onAppointmentCreated={handleAppointmentCreated} />
+                <AppointmentForm
+                  onAppointmentCreated={() => setAgendaVersion((version) => version + 1)}
+                />
               </section>
             </section>
+            <ReassignmentPanel
+              doctorName={user.name}
+              onReassigned={() => setAgendaVersion((version) => version + 1)}
+            />
           </>
         ) : activePage === 'pacientes' ? (
           <>
-            {(error || success) && (
-              <div className={error ? 'notice error' : 'notice success'}>{error || success}</div>
-            )}
-            <section className="metrics-grid" aria-label="Resumen operacional">
-              <article className="metric-card">
-                <span>Pacientes activos</span>
-                <strong>{patients.length}</strong>
-              </article>
-              <article className="metric-card">
-                <span>Citas del paciente</span>
-                <strong>{citas.length}</strong>
-              </article>
-              <article className="metric-card">
-                <span>Estado BFF</span>
-                <strong>Online</strong>
-              </article>
+            {(error || success) && <div className={error ? 'notice error' : 'notice success'}>{error || success}</div>}
+            <section className="metrics-grid">
+              <article className="metric-card"><span>Pacientes activos</span><strong>{patients.length}</strong></article>
+              <article className="metric-card"><span>Citas seleccionadas</span><strong>{citas.length}</strong></article>
+              <article className="metric-card"><span>Estado del sistema</span><strong className="metric-status">Operativo</strong></article>
             </section>
             <main className="dashboard-grid">
-              <section className="panel patient-panel" id="pacientes">
+              <section className="panel patient-panel">
                 <div className="panel-header">
-                  <div>
-                    <span className="eyebrow">Registro</span>
-                    <h2>Pacientes</h2>
-                  </div>
+                  <div><span className="section-kicker">Registro clinico</span><h2>Pacientes</h2></div>
                   {loading && <span className="loading-pill">Actualizando</span>}
                 </div>
-
-                <PatientList
-                  patients={filteredPatients}
-                  onSelect={handleSelectPatient}
-                  selectedId={selectedPatient?.id}
+                <input
+                  className="search-input"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  placeholder="Buscar por nombre o RUT"
                 />
+                <PatientList patients={filteredPatients} onSelect={handleSelectPatient} selectedId={selectedPatient?.id} />
               </section>
-
               <section className="panel detail-panel">
-                <div className="panel-header">
-                  <div>
-                    <span className="eyebrow">Ficha rapida</span>
-                    <h2>Detalle clinico</h2>
-                  </div>
-                </div>
+                <div className="panel-header"><div><span className="section-kicker">Ficha rapida</span><h2>Detalle clinico</h2></div></div>
                 <PatientDetail patient={selectedPatient} citas={citas} />
               </section>
-
               <section className="panel form-panel">
-                <div className="panel-header">
-                  <div>
-                    <span className="eyebrow">Nuevo ingreso</span>
-                    <h2>Agregar paciente</h2>
-                  </div>
-                </div>
+                <div className="panel-header"><div><span className="section-kicker">Nueva admision</span><h2>Agregar paciente</h2></div></div>
                 <PatientForm onSubmit={handleCreatePatient} saving={saving} />
               </section>
             </main>
           </>
         ) : activePage === 'lista-espera' ? (
-          <MicroservicesPanel />
+          <MicroservicesPanel showNotifications={settings.showNotifications} autoRefresh={settings.autoRefresh} />
         ) : activePage === 'reportes' ? (
-          <section className="dashboard-grid">
-            <section className="panel report-panel">
-              <div className="panel-header">
-                <div>
-                  <span className="eyebrow">Reportes</span>
-                  <h2>Resumen médico</h2>
-                </div>
-              </div>
-              <div className="metric-list">
-                <article className="metric-card">
-                  <span>Total de pacientes</span>
-                  <strong>{patients.length}</strong>
-                </article>
-                <article className="metric-card">
-                  <span>Citas asignadas</span>
-                  <strong>{citas.length}</strong>
-                </article>
-                <article className="metric-card">
-                  <span>Sección privada</span>
-                  <strong>Acceso médico</strong>
-                </article>
-              </div>
-            </section>
+          <section className="report-band">
+            <div className="settings-intro">
+              <span className="section-kicker">Actividad asistencial</span>
+              <h2>Resumen del turno</h2>
+              <p>Indicadores rapidos del trabajo realizado en el panel.</p>
+            </div>
+            <div className="metrics-grid">
+              <article className="metric-card"><span>Total pacientes</span><strong>{patients.length}</strong></article>
+              <article className="metric-card"><span>Citas consultadas</span><strong>{citas.length}</strong></article>
+              <article className="metric-card"><span>Perfil activo</span><strong className="metric-status">Medico</strong></article>
+            </div>
           </section>
         ) : (
-          <section className="dashboard-grid">
-            <section className="panel config-panel">
-              <div className="panel-header">
-                <div>
-                  <span className="eyebrow">Configuración</span>
-                  <h2>Ajustes del sistema</h2>
-                </div>
-              </div>
-              <div className="panel-content">
-                <p>Acceso solo para médicos autenticados.</p>
-                <ul>
-                  <li>Configuración de pacientes</li>
-                  <li>Administración de reportes</li>
-                  <li>Preferencias de notificaciones</li>
-                </ul>
-              </div>
-            </section>
-          </section>
+          <SettingsPanel settings={settings} onChange={setSettings} />
         )}
       </div>
     </div>

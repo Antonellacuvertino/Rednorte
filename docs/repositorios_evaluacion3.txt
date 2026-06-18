@@ -1,0 +1,40 @@
+REPOSITORIOS EVALUACION 3
+
+Antes de entregar, reemplazar <organizacion> con el usuario u organizacion real
+de GitHub y verificar que los enlaces sean publicos para el docente.
+
+Repositorio principal
+https://github.com/<organizacion>/rednorte-proyecto
+Documentacion general, arquitectura, Docker Compose y scripts de ejecucion.
+
+Repositorio frontend
+https://github.com/<organizacion>/rednorte-frontend
+Aplicacion React, dependencias NPM y pruebas Vitest.
+
+Repositorio BFF
+https://github.com/<organizacion>/rednorte-bff
+API de entrada, JWT, Redis, RabbitMQ y clientes OpenFeign.
+
+Repositorio microservicio pacientes
+https://github.com/<organizacion>/rednorte-ms-pacientes
+Persistencia y API REST de pacientes.
+
+Repositorio microservicio citas
+https://github.com/<organizacion>/rednorte-ms-citas
+Persistencia y API REST de agenda medica.
+
+Repositorio microservicio lista de espera
+https://github.com/<organizacion>/rednorte-ms-lista-espera
+Persistencia y priorizacion de pacientes pendientes.
+
+Repositorio microservicio reasignacion
+https://github.com/<organizacion>/rednorte-ms-reasignacion
+Reglas y proceso de reasignacion de atenciones.
+
+Repositorio microservicio auditoria
+https://github.com/<organizacion>/rednorte-ms-auditoria
+Consumo RabbitMQ y persistencia de evidencia de eventos.
+
+Repositorio microservicio notificaciones
+https://github.com/<organizacion>/rednorte-ms-notificaciones
+Generacion y consulta de notificaciones operativas.

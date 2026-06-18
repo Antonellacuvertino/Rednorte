@@ -3,11 +3,19 @@ package cl.duoc.rednorte.controller;
 import cl.duoc.rednorte.dto.PacienteDTO;
 import cl.duoc.rednorte.dto.CitaDTO;
 import cl.duoc.rednorte.dto.ListaEsperaDTO;
-import cl.duoc.rednorte.dto.ReasignacionReglaDTO;
+import cl.duoc.rednorte.dto.ReasignacionDTO;
+import cl.duoc.rednorte.dto.ReasignacionRequestDTO;
+import cl.duoc.rednorte.dto.AuditEventDTO;
+import cl.duoc.rednorte.dto.NotificationDTO;
+import cl.duoc.rednorte.feign.AuditClient;
 import cl.duoc.rednorte.feign.PacienteClient;
 import cl.duoc.rednorte.feign.CitaClient;
 import cl.duoc.rednorte.feign.ListaEsperaClient;
 import cl.duoc.rednorte.feign.ReasignacionClient;
+import cl.duoc.rednorte.feign.NotificationClient;
+import cl.duoc.rednorte.messaging.AuditEventPublisher;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,18 +38,31 @@ public class PacienteCitaController {
     @Autowired
     private ReasignacionClient reasignacionClient;
 
+    @Autowired
+    private AuditEventPublisher auditEventPublisher;
+
+    @Autowired
+    private AuditClient auditClient;
+
+    @Autowired
+    private NotificationClient notificationClient;
+
     @GetMapping("/pacientes")
+    @Cacheable("pacientes")
     public List<PacienteDTO> getPacientes() {
         return pacienteClient.getAllPacientes();
     }
 
     @PostMapping("/pacientes")
+    @CacheEvict(value = "pacientes", allEntries = true)
     public ResponseEntity<PacienteDTO> crearPaciente(@RequestBody PacienteDTO paciente) {
         PacienteDTO nuevoPaciente = pacienteClient.createPaciente(paciente);
+        auditEventPublisher.publish("PACIENTE_CREADO", nuevoPaciente);
         return ResponseEntity.ok(nuevoPaciente);
     }
 
     @GetMapping("/paciente-citas/{id}")
+    @Cacheable(value = "paciente-citas", key = "#id")
     public ResponseEntity<Map<String, Object>> getPacienteConCitas(@PathVariable Long id) {
         PacienteDTO paciente = pacienteClient.getPacienteById(id);
         if (paciente == null) {
@@ -65,7 +86,9 @@ public class PacienteCitaController {
     @PostMapping("/citas")
     public CitaDTO crearCita(@RequestBody CitaDTO cita) {
         String tipo = cita.getTipoCita() == null || cita.getTipoCita().isBlank() ? "GENERAL" : cita.getTipoCita();
-        return citaClient.createCita(tipo, cita);
+        CitaDTO nuevaCita = citaClient.createCita(tipo, cita);
+        auditEventPublisher.publish("CITA_CREADA", nuevaCita);
+        return nuevaCita;
     }
 
     @GetMapping("/lista-espera")
@@ -93,23 +116,31 @@ public class PacienteCitaController {
         return listaEsperaClient.cancelar(id);
     }
 
-    @GetMapping("/reasignacion/reglas")
-    public List<ReasignacionReglaDTO> getReglasReasignacion() {
-        return reasignacionClient.getReglas();
+    @GetMapping("/reasignaciones")
+    public List<ReasignacionDTO> getReasignaciones() {
+        return reasignacionClient.getAll();
     }
 
-    @PostMapping("/reasignacion/reglas")
-    public ReasignacionReglaDTO crearReglaReasignacion(@RequestBody ReasignacionReglaDTO regla) {
-        return reasignacionClient.createRegla(regla);
+    @PostMapping("/reasignaciones")
+    public ReasignacionDTO reprogramarCita(@RequestBody ReasignacionRequestDTO request) {
+        ReasignacionDTO result = reasignacionClient.reprogramar(request);
+        auditEventPublisher.publish("CITA_REPROGRAMADA", result);
+        return result;
     }
 
-    @PostMapping("/reasignacion/inicializar")
-    public String inicializarReasignacion() {
-        return reasignacionClient.inicializar();
+    @GetMapping("/auditoria")
+    public List<AuditEventDTO> getAuditoria(@RequestParam(required = false) String tipo) {
+        return auditClient.findAll(tipo);
     }
 
-    @PostMapping("/reasignacion/ejecutar")
-    public String ejecutarReasignacion() {
-        return reasignacionClient.ejecutar();
+    @GetMapping("/notificaciones")
+    public List<NotificationDTO> getNotificaciones(
+            @RequestParam(defaultValue = "false") boolean noLeidas) {
+        return notificationClient.findAll(noLeidas);
+    }
+
+    @PutMapping("/notificaciones/{id}/leer")
+    public NotificationDTO leerNotificacion(@PathVariable Long id) {
+        return notificationClient.markAsRead(id);
     }
 }

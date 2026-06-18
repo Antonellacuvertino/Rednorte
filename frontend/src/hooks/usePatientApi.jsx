@@ -1,149 +1,148 @@
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8085/bff';
+const AUTH_BASE = import.meta.env.VITE_AUTH_BASE || 'http://localhost:8085/auth';
+const TOKEN_KEY = 'rednorte-token';
+
+export function setAuthToken(token) {
+  if (token) {
+    localStorage.setItem(TOKEN_KEY, token);
+  } else {
+    localStorage.removeItem(TOKEN_KEY);
+  }
+}
+
+function authHeaders(extraHeaders = {}) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  return {
+    ...extraHeaders,
+    ...(token ? { Authorization: `Bearer ${token}` } : {})
+  };
+}
+
+async function requestJson(url, options = {}) {
+  const response = await fetch(url, {
+    ...options,
+    headers: authHeaders(options.headers)
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error HTTP ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function loginDoctor(credentials) {
+  const response = await fetch(`${AUTH_BASE}/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(credentials)
+  });
+
+  if (!response.ok) {
+    throw new Error('Credenciales invalidas');
+  }
+
+  return response.json();
+}
+
+export async function registerDoctor(credentials) {
+  const response = await fetch(`${AUTH_BASE}/register`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(credentials)
+  });
+
+  if (!response.ok) {
+    throw new Error('No se pudo registrar la cuenta');
+  }
+
+  return response.json();
+}
 
 export async function fetchPatients() {
-  const response = await fetch(`${API_BASE}/pacientes`);
-  if (!response.ok) {
-    throw new Error('Error al obtener pacientes');
-  }
-  return response.json();
+  return requestJson(`${API_BASE}/pacientes`);
 }
 
 export async function fetchPatientWithCitas(patientId) {
-  const response = await fetch(`${API_BASE}/paciente-citas/${patientId}`);
-  if (!response.ok) {
-    throw new Error('Error al obtener datos del paciente');
-  }
-  return response.json();
+  return requestJson(`${API_BASE}/paciente-citas/${patientId}`);
 }
 
 export async function fetchAllCitas() {
-  const response = await fetch(`${API_BASE}/citas`);
-  if (!response.ok) {
-    throw new Error('Error al obtener citas públicas');
-  }
-  return response.json();
+  return requestJson(`${API_BASE}/citas`);
 }
 
 export async function createPatient(patient) {
-  const response = await fetch(`${API_BASE}/pacientes`, {
+  return requestJson(`${API_BASE}/pacientes`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(patient)
   });
-
-  if (!response.ok) {
-    throw new Error('Error al crear paciente');
-  }
-
-  return response.json();
 }
 
 export async function createCita(cita) {
-  const response = await fetch(`${API_BASE}/citas`, {
+  return requestJson(`${API_BASE}/citas`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(cita)
   });
-
-  if (!response.ok) {
-    throw new Error('Error al crear cita');
-  }
-
-  return response.json();
 }
 
 export async function fetchListaEspera() {
-  const response = await fetch(`${API_BASE}/lista-espera`);
-  if (!response.ok) {
-    throw new Error('Error al obtener lista de espera');
-  }
-  return response.json();
+  return requestJson(`${API_BASE}/lista-espera`);
 }
 
 export async function fetchListaEsperaPendiente() {
-  const response = await fetch(`${API_BASE}/lista-espera/pendientes`);
-  if (!response.ok) {
-    throw new Error('Error al obtener lista de espera pendiente');
-  }
-  return response.json();
+  return requestJson(`${API_BASE}/lista-espera/pendientes`);
 }
 
 export async function createListaEspera(registro) {
-  const response = await fetch(`${API_BASE}/lista-espera`, {
+  return requestJson(`${API_BASE}/lista-espera`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(registro)
   });
-
-  if (!response.ok) {
-    throw new Error('Error al crear registro de lista de espera');
-  }
-
-  return response.json();
 }
 
 export async function updateListaEsperaEstado(id, action) {
-  const response = await fetch(`${API_BASE}/lista-espera/${id}/${action}`, {
+  return requestJson(`${API_BASE}/lista-espera/${id}/${action}`, {
     method: 'PUT'
   });
-
-  if (!response.ok) {
-    throw new Error('Error al actualizar lista de espera');
-  }
-
-  return response.json();
 }
 
-export async function fetchReglasReasignacion() {
-  const response = await fetch(`${API_BASE}/reasignacion/reglas`);
-  if (!response.ok) {
-    throw new Error('Error al obtener reglas de reasignacion');
-  }
-  return response.json();
+export async function fetchReassignments() {
+  return requestJson(`${API_BASE}/reasignaciones`);
 }
 
-export async function createReglaReasignacion(regla) {
-  const response = await fetch(`${API_BASE}/reasignacion/reglas`, {
+export async function reassignAppointment(reassignment) {
+  return requestJson(`${API_BASE}/reasignaciones`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify(regla)
+    body: JSON.stringify(reassignment)
   });
-
-  if (!response.ok) {
-    throw new Error('Error al crear regla de reasignacion');
-  }
-
-  return response.json();
 }
 
-export async function inicializarReasignacion() {
-  const response = await fetch(`${API_BASE}/reasignacion/inicializar`, {
-    method: 'POST'
-  });
-
-  if (!response.ok) {
-    throw new Error('Error al inicializar reasignacion');
-  }
-
-  return response.text();
+export async function fetchAuditEvents() {
+  return requestJson(`${API_BASE}/auditoria`);
 }
 
-export async function ejecutarReasignacion() {
-  const response = await fetch(`${API_BASE}/reasignacion/ejecutar`, {
-    method: 'POST'
+export async function fetchNotifications(unreadOnly = false) {
+  return requestJson(`${API_BASE}/notificaciones?noLeidas=${unreadOnly}`);
+}
+
+export async function markNotificationAsRead(id) {
+  return requestJson(`${API_BASE}/notificaciones/${id}/leer`, {
+    method: 'PUT'
   });
-
-  if (!response.ok) {
-    throw new Error('Error al ejecutar reasignacion');
-  }
-
-  return response.text();
 }

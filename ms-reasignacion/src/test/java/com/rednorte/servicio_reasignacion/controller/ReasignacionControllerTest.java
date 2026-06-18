@@ -1,8 +1,7 @@
 package com.rednorte.servicio_reasignacion.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rednorte.servicio_reasignacion.entity.ReasignacionRegla;
-import com.rednorte.servicio_reasignacion.repository.ReasignacionReglaRepository;
+import com.rednorte.servicio_reasignacion.entity.Reasignacion;
 import com.rednorte.servicio_reasignacion.service.ReasignacionService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,61 +13,54 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ReasignacionController.class)
 class ReasignacionControllerTest {
-
     @Autowired
     private MockMvc mockMvc;
-
     @Autowired
     private ObjectMapper objectMapper;
-
     @MockBean
-    private ReasignacionReglaRepository reglaRepository;
-
-    @MockBean
-    private ReasignacionService reasignacionService;
+    private ReasignacionService service;
 
     @Test
-    void getReglasActivasRetornaReglas() throws Exception {
-        when(reglaRepository.findByActiva(true))
-                .thenReturn(List.of(new ReasignacionRegla("CARDIOLOGIA", "TIEMPO_ESPERA", "30", "Regla")));
+    void listaYRegistraReasignaciones() throws Exception {
+        Reasignacion result = new Reasignacion();
+        result.setId(1L);
+        result.setCitaId(5L);
+        result.setFechaNueva("2026-07-10");
+        result.setHoraNueva("15:30");
+        when(service.findAll()).thenReturn(List.of(result));
+        when(service.reprogramar(any())).thenReturn(result);
 
-        mockMvc.perform(get("/api/reasignacion/reglas/activas"))
+        mockMvc.perform(get("/api/reasignaciones"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].especialidad").value("CARDIOLOGIA"))
-                .andExpect(jsonPath("$[0].activa").value(true));
-    }
+                .andExpect(jsonPath("$[0].citaId").value(5));
 
-    @Test
-    void crearReglaGuardaRegla() throws Exception {
-        ReasignacionRegla regla = new ReasignacionRegla("PEDIATRIA", "CAPACIDAD_MAXIMA", "10", "Capacidad");
-        regla.setId(5L);
-
-        when(reglaRepository.save(any(ReasignacionRegla.class))).thenReturn(regla);
-
-        mockMvc.perform(post("/api/reasignacion/reglas")
+        mockMvc.perform(post("/api/reasignaciones")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(regla)))
+                        .content(objectMapper.writeValueAsString(new Request(
+                                5L, "2026-07-10", "15:30", "Paciente atrasado", "Dra. Norte"))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(5))
-                .andExpect(jsonPath("$.reglaTipo").value("CAPACIDAD_MAXIMA"));
+                .andExpect(jsonPath("$.fechaNueva").value("2026-07-10"));
     }
 
     @Test
-    void inicializarReglasRespondeOk() throws Exception {
-        doNothing().when(reasignacionService).inicializarReglasPorDefecto();
+    void retornaBadRequestCuandoNoPuedeReprogramar() throws Exception {
+        when(service.reprogramar(any())).thenThrow(new IllegalArgumentException());
 
-        mockMvc.perform(post("/api/reasignacion/inicializar"))
-                .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("inicializadas correctamente")));
+        mockMvc.perform(post("/api/reasignaciones")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    private record Request(Long citaId, String fechaNueva, String horaNueva, String motivo,
+                           String medicoResponsable) {
     }
 }

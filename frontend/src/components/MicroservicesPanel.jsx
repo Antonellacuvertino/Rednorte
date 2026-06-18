@@ -1,53 +1,49 @@
 import { useEffect, useState } from 'react';
+import { Bell, ClipboardList, Radio, UserRoundCheck } from 'lucide-react';
 import {
   createListaEspera,
-  createReglaReasignacion,
-  ejecutarReasignacion,
+  fetchAuditEvents,
   fetchListaEsperaPendiente,
+  fetchNotifications,
   fetchPatients,
-  fetchReglasReasignacion,
-  inicializarReasignacion,
+  markNotificationAsRead,
   updateListaEsperaEstado
 } from '../hooks/usePatientApi';
 
 const especialidades = ['CARDIOLOGIA', 'PEDIATRIA', 'TRAUMATOLOGIA', 'GINECOLOGIA', 'OFTALMOLOGIA', 'DERMATOLOGIA'];
 const prioridades = ['ALTA', 'MEDIA', 'BAJA'];
-const tiposRegla = ['TIEMPO_ESPERA', 'CAPACIDAD_MAXIMA', 'PRIORIDAD'];
 
-function MicroservicesPanel() {
+function MicroservicesPanel({ showNotifications = true, autoRefresh = false }) {
   const [patients, setPatients] = useState([]);
-  const [listaEspera, setListaEspera] = useState([]);
-  const [reglas, setReglas] = useState([]);
+  const [waitingList, setWaitingList] = useState([]);
+  const [auditEvents, setAuditEvents] = useState([]);
+  const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
-  const [listaForm, setListaForm] = useState({
+  const [form, setForm] = useState({
     pacienteId: '',
     especialidad: 'CARDIOLOGIA',
     prioridad: 'MEDIA',
     observaciones: ''
   });
-  const [reglaForm, setReglaForm] = useState({
-    especialidad: 'CARDIOLOGIA',
-    reglaTipo: 'TIEMPO_ESPERA',
-    valor: '30',
-    descripcion: ''
-  });
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [patientData, listaData, reglasData] = await Promise.all([
+      const [patientData, waitingData, auditData, notificationData] = await Promise.all([
         fetchPatients(),
         fetchListaEsperaPendiente(),
-        fetchReglasReasignacion()
+        fetchAuditEvents(),
+        showNotifications ? fetchNotifications() : Promise.resolve([])
       ]);
       setPatients(patientData || []);
-      setListaEspera(listaData || []);
-      setReglas(reglasData || []);
+      setWaitingList(waitingData || []);
+      setAuditEvents(auditData || []);
+      setNotifications(notificationData || []);
       setError('');
-    } catch (e) {
-      setError('No se pudo cargar la lista de espera. Revisa que los servicios esten activos.');
+    } catch {
+      setError('No se pudo sincronizar la informacion operativa.');
     } finally {
       setLoading(false);
     }
@@ -55,58 +51,32 @@ function MicroservicesPanel() {
 
   useEffect(() => {
     loadData();
-  }, []);
+    if (!autoRefresh) return undefined;
+    const interval = window.setInterval(loadData, 30000);
+    return () => window.clearInterval(interval);
+  }, [autoRefresh, showNotifications]);
 
-  const handleListaSubmit = async (event) => {
+  const createWaitingRecord = async (event) => {
     event.preventDefault();
-    setMessage('');
     try {
-      await createListaEspera({
-        ...listaForm,
-        pacienteId: Number(listaForm.pacienteId),
-        estado: 'PENDIENTE'
-      });
-      setListaForm((current) => ({ ...current, pacienteId: '', observaciones: '' }));
-      setMessage('Paciente agregado a lista de espera.');
+      await createListaEspera({ ...form, pacienteId: Number(form.pacienteId), estado: 'PENDIENTE' });
+      setForm((current) => ({ ...current, pacienteId: '', observaciones: '' }));
+      setMessage('Paciente incorporado a la lista de espera.');
       await loadData();
-    } catch (e) {
-      setError('No se pudo crear el registro de lista de espera.');
+    } catch {
+      setError('No se pudo crear el registro de espera.');
     }
   };
 
-  const handleReglaSubmit = async (event) => {
-    event.preventDefault();
-    setMessage('');
-    try {
-      await createReglaReasignacion({ ...reglaForm, activa: true });
-      setReglaForm((current) => ({ ...current, descripcion: '' }));
-      setMessage('Regla de reasignacion creada.');
-      await loadData();
-    } catch (e) {
-      setError('No se pudo crear la regla de reasignacion.');
-    }
+  const updateStatus = async (id, action) => {
+    await updateListaEsperaEstado(id, action);
+    setMessage(action === 'atender' ? 'Paciente marcado como atendido.' : 'Registro cancelado.');
+    await loadData();
   };
 
-  const handleListaAction = async (id, action) => {
-    setMessage('');
-    try {
-      await updateListaEsperaEstado(id, action);
-      setMessage(action === 'atender' ? 'Registro marcado como atendido.' : 'Registro cancelado.');
-      await loadData();
-    } catch (e) {
-      setError('No se pudo actualizar el registro.');
-    }
-  };
-
-  const handleReasignacionAction = async (action) => {
-    setMessage('');
-    try {
-      const result = action === 'inicializar' ? await inicializarReasignacion() : await ejecutarReasignacion();
-      setMessage(result);
-      await loadData();
-    } catch (e) {
-      setError('No se pudo ejecutar la accion de reasignacion.');
-    }
+  const readNotification = async (id) => {
+    await markNotificationAsRead(id);
+    await loadData();
   };
 
   return (
@@ -115,16 +85,19 @@ function MicroservicesPanel() {
 
       <section className="metrics-grid">
         <article className="metric-card">
-          <span>En espera</span>
-          <strong>{listaEspera.length}</strong>
+          <ClipboardList size={19} />
+          <span>Pacientes en espera</span>
+          <strong>{waitingList.length}</strong>
         </article>
         <article className="metric-card">
-          <span>Reglas</span>
-          <strong>{reglas.length}</strong>
+          <Bell size={19} />
+          <span>Notificaciones pendientes</span>
+          <strong>{notifications.filter((item) => !item.readFlag).length}</strong>
         </article>
         <article className="metric-card">
-          <span>Estado</span>
-          <strong>{loading ? 'Sync' : 'OK'}</strong>
+          <Radio size={19} />
+          <span>Sincronizacion</span>
+          <strong className="metric-status">{loading ? 'Actualizando' : 'Operativa'}</strong>
         </article>
       </section>
 
@@ -132,14 +105,15 @@ function MicroservicesPanel() {
         <section className="panel">
           <div className="panel-header">
             <div>
-              <span className="eyebrow">Lista de espera</span>
-              <h2>Agregar paciente</h2>
+              <span className="section-kicker">Nuevo ingreso</span>
+              <h2>Agregar a lista de espera</h2>
             </div>
+            <UserRoundCheck size={22} />
           </div>
-          <form className="patient-form" onSubmit={handleListaSubmit}>
+          <form className="patient-form" onSubmit={createWaitingRecord}>
             <label className="field">
               <span>Paciente</span>
-              <select value={listaForm.pacienteId} onChange={(e) => setListaForm({ ...listaForm, pacienteId: e.target.value })} required>
+              <select value={form.pacienteId} onChange={(event) => setForm({ ...form, pacienteId: event.target.value })} required>
                 <option value="">Seleccionar paciente</option>
                 {patients.map((patient) => (
                   <option key={patient.id} value={patient.id}>
@@ -151,115 +125,86 @@ function MicroservicesPanel() {
             <div className="form-grid">
               <label className="field">
                 <span>Especialidad</span>
-                <select value={listaForm.especialidad} onChange={(e) => setListaForm({ ...listaForm, especialidad: e.target.value })}>
-                  {especialidades.map((item) => <option key={item} value={item}>{item}</option>)}
+                <select value={form.especialidad} onChange={(event) => setForm({ ...form, especialidad: event.target.value })}>
+                  {especialidades.map((item) => <option key={item}>{item}</option>)}
                 </select>
               </label>
               <label className="field">
                 <span>Prioridad</span>
-                <select value={listaForm.prioridad} onChange={(e) => setListaForm({ ...listaForm, prioridad: e.target.value })}>
-                  {prioridades.map((item) => <option key={item} value={item}>{item}</option>)}
+                <select value={form.prioridad} onChange={(event) => setForm({ ...form, prioridad: event.target.value })}>
+                  {prioridades.map((item) => <option key={item}>{item}</option>)}
                 </select>
               </label>
             </div>
-            <label className="field field-wide">
+            <label className="field">
               <span>Observaciones</span>
-              <textarea rows="3" value={listaForm.observaciones} onChange={(e) => setListaForm({ ...listaForm, observaciones: e.target.value })} />
+              <textarea rows="3" value={form.observaciones} onChange={(event) => setForm({ ...form, observaciones: event.target.value })} />
             </label>
-            <button className="primary-button" type="submit">Crear espera</button>
+            <button className="primary-button" type="submit">Guardar en lista</button>
           </form>
         </section>
 
         <section className="panel">
           <div className="panel-header">
             <div>
-              <span className="eyebrow">Pendientes</span>
-              <h2>Cola priorizada</h2>
+              <span className="section-kicker">Cola priorizada</span>
+              <h2>Atenciones pendientes</h2>
             </div>
           </div>
           <div className="appointment-list">
-            {listaEspera.length ? listaEspera.map((item) => (
+            {waitingList.length ? waitingList.map((item) => (
               <article className="appointment-card" key={item.id}>
                 <div>
                   <strong>{item.especialidad}</strong>
-                  <span>Paciente #{item.pacienteId} - {item.prioridad}</span>
+                  <span>Paciente #{item.pacienteId} - Prioridad {item.prioridad}</span>
                   <p>{item.observaciones || 'Sin observaciones'}</p>
                 </div>
                 <div className="inline-actions">
-                  <button type="button" onClick={() => handleListaAction(item.id, 'atender')}>Atender</button>
-                  <button type="button" onClick={() => handleListaAction(item.id, 'cancelar')}>Cancelar</button>
+                  <button type="button" onClick={() => updateStatus(item.id, 'atender')}>Atender</button>
+                  <button type="button" onClick={() => updateStatus(item.id, 'cancelar')}>Cancelar</button>
                 </div>
               </article>
-            )) : (
-              <div className="empty-state">
-                <strong>No hay pacientes pendientes</strong>
-                <span>Crea un registro para probar el microservicio.</span>
-              </div>
-            )}
+            )) : <div className="empty-state"><strong>No hay pacientes pendientes</strong></div>}
           </div>
         </section>
+
+        {showNotifications && (
+          <section className="panel">
+            <div className="panel-header">
+              <div>
+                <span className="section-kicker">Centro de avisos</span>
+                <h2>Notificaciones</h2>
+              </div>
+            </div>
+            <div className="appointment-list">
+              {notifications.length ? notifications.slice(0, 6).map((item) => (
+                <article className="appointment-card" key={item.id}>
+                  <div>
+                    <strong>{item.title}</strong>
+                    <span>{item.eventType}</span>
+                    <p>{item.message}</p>
+                  </div>
+                  {!item.readFlag && <button type="button" onClick={() => readNotification(item.id)}>Marcar leida</button>}
+                </article>
+              )) : <div className="empty-state"><strong>Sin notificaciones</strong></div>}
+            </div>
+          </section>
+        )}
 
         <section className="panel">
           <div className="panel-header">
             <div>
-              <span className="eyebrow">Reasignacion</span>
-              <h2>Reglas automaticas</h2>
+              <span className="section-kicker">Trazabilidad tecnica</span>
+              <h2>Auditoria reciente</h2>
             </div>
           </div>
-          <form className="patient-form" onSubmit={handleReglaSubmit}>
-            <div className="form-grid">
-              <label className="field">
-                <span>Especialidad</span>
-                <select value={reglaForm.especialidad} onChange={(e) => setReglaForm({ ...reglaForm, especialidad: e.target.value })}>
-                  {especialidades.map((item) => <option key={item} value={item}>{item}</option>)}
-                </select>
-              </label>
-              <label className="field">
-                <span>Tipo</span>
-                <select value={reglaForm.reglaTipo} onChange={(e) => setReglaForm({ ...reglaForm, reglaTipo: e.target.value })}>
-                  {tiposRegla.map((item) => <option key={item} value={item}>{item}</option>)}
-                </select>
-              </label>
-            </div>
-            <label className="field">
-              <span>Valor</span>
-              <input value={reglaForm.valor} onChange={(e) => setReglaForm({ ...reglaForm, valor: e.target.value })} required />
-            </label>
-            <label className="field">
-              <span>Descripcion</span>
-              <textarea rows="3" value={reglaForm.descripcion} onChange={(e) => setReglaForm({ ...reglaForm, descripcion: e.target.value })} />
-            </label>
-            <button className="primary-button" type="submit">Crear regla</button>
-          </form>
-          <div className="split-actions">
-            <button type="button" onClick={() => handleReasignacionAction('inicializar')}>Inicializar reglas</button>
-            <button type="button" onClick={() => handleReasignacionAction('ejecutar')}>Ejecutar ahora</button>
-          </div>
-        </section>
-
-        <section className="panel">
-          <div className="panel-header">
-            <div>
-              <span className="eyebrow">Reglas activas</span>
-              <h2>Configuracion actual</h2>
-            </div>
-          </div>
-          <div className="appointment-list">
-            {reglas.length ? reglas.map((regla) => (
-              <article className="appointment-card" key={regla.id}>
-                <div>
-                  <strong>{regla.especialidad}</strong>
-                  <span>{regla.reglaTipo} - Valor {regla.valor}</span>
-                  <p>{regla.descripcion || 'Sin descripcion'}</p>
-                </div>
-                <span className="status-badge">{regla.activa ? 'Activa' : 'Inactiva'}</span>
-              </article>
-            )) : (
-              <div className="empty-state">
-                <strong>No hay reglas</strong>
-                <span>Inicializa reglas por defecto o crea una nueva.</span>
+          <div className="audit-table">
+            {auditEvents.length ? auditEvents.slice(0, 8).map((item) => (
+              <div className="audit-row" key={item.id}>
+                <strong>{item.eventType}</strong>
+                <span>{new Date(item.occurredAt).toLocaleString()}</span>
               </div>
-            )}
+            )) : <div className="empty-state"><strong>Sin eventos registrados</strong></div>}
           </div>
         </section>
       </main>
