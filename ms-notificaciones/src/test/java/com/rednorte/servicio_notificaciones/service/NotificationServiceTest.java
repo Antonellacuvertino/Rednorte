@@ -1,6 +1,7 @@
 package com.rednorte.servicio_notificaciones.service;
 
 import com.rednorte.servicio_notificaciones.entity.Notification;
+import com.rednorte.servicio_notificaciones.exception.ResourceNotFoundException;
 import com.rednorte.servicio_notificaciones.repository.NotificationRepository;
 import org.junit.jupiter.api.Test;
 
@@ -18,13 +19,17 @@ import static org.mockito.Mockito.when;
 
 class NotificationServiceTest {
     @Test
-    void creaNotificacionDesdeEvento() {
+    void creaNotificacionesParaTodosLosTiposDeEvento() {
         NotificationRepository repository = mock(NotificationRepository.class);
         NotificationService service = new NotificationService(repository);
 
         service.receive(Map.of("eventType", "PACIENTE_CREADO"));
+        service.receive(Map.of("eventType", "CITA_CREADA"));
+        service.receive(Map.of("eventType", "CITA_REPROGRAMADA"));
+        service.receive(Map.of("eventType", "OTRO"));
+        service.receive(Map.of());
 
-        verify(repository).save(any(Notification.class));
+        verify(repository, org.mockito.Mockito.times(5)).save(any(Notification.class));
     }
 
     @Test
@@ -47,6 +52,6 @@ class NotificationServiceTest {
         NotificationService service = new NotificationService(repository);
 
         assertTrue(service.markAsRead(1L).isReadFlag());
-        assertThrows(IllegalArgumentException.class, () -> service.markAsRead(2L));
+        assertThrows(ResourceNotFoundException.class, () -> service.markAsRead(2L));
     }
 }

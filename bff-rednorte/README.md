@@ -11,6 +11,7 @@ OpenFeign y concentra autenticacion, cache y publicacion de eventos.
 - Claves almacenadas con BCrypt.
 - Cache Redis para pacientes y detalle paciente-citas.
 - Eventos de auditoria enviados a RabbitMQ.
+- Swagger/OpenAPI en `http://localhost:8085/swagger-ui.html`.
 
 ## Ejecucion
 
@@ -44,3 +45,4 @@ mvnw.cmd clean test
 ```
 
 Reporte JaCoCo: `target/site/jacoco/index.html`.
+La compilacion falla si la cobertura de lineas es inferior a 90%.

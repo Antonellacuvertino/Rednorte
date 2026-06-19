@@ -12,6 +12,9 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.Map;
 
+/**
+ * Genera y valida tokens JWT firmados con HMAC SHA-256.
+ */
 @Service
 public class JwtService {
 
@@ -25,6 +28,13 @@ public class JwtService {
         this.expirationMinutes = expirationMinutes;
     }
 
+    /**
+     * Genera un token con identidad, rol y fecha de expiracion.
+     *
+     * @param email correo institucional usado como sujeto
+     * @param name nombre visible del usuario
+     * @return token JWT compacto y firmado
+     */
     public String generateToken(String email, String name) {
         Instant now = Instant.now();
         return Jwts.builder()
@@ -32,7 +42,7 @@ public class JwtService {
                 .claims(Map.of("name", name, "role", "MEDICO"))
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plusSeconds(expirationMinutes * 60)))
-                .signWith(key)
+                .signWith(key, Jwts.SIG.HS256)
                 .compact();
     }
 
@@ -42,5 +52,12 @@ public class JwtService {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+    }
+
+    /**
+     * @return vigencia configurada del token en segundos
+     */
+    public long expirationSeconds() {
+        return expirationMinutes * 60;
     }
 }

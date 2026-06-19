@@ -2,20 +2,24 @@
 
 ## Resultado consolidado
 
-Ejecucion verificada el 18 de junio de 2026:
+Ejecucion verificada el 19 de junio de 2026:
 
 | Componente | Herramienta | Pruebas | Cobertura de lineas |
 | --- | --- | ---: | ---: |
-| Frontend React | Vitest + V8 | 15 | 79,91% |
-| BFF RedNorte | JUnit 5 + Mockito + JaCoCo | 12 | 74,79% |
-| MS Pacientes | JUnit 5 + Mockito + JaCoCo | 3 | 100% |
-| MS Citas | JUnit 5 + Mockito + JaCoCo | 4 | 93,94% |
-| MS Lista Espera | JUnit 5 + Mockito + JaCoCo | 5 | 100% |
-| MS Reasignacion | JUnit 5 + Mockito + JaCoCo | 4 | 92,31% |
-| MS Auditoria | JUnit 5 + Mockito + JaCoCo | 3 | 80,95% |
-| MS Notificaciones | JUnit 5 + Mockito + JaCoCo | 4 | 82,14% |
+| Frontend React | Vitest + V8 | 25 | 98,58% |
+| BFF RedNorte | JUnit 5 + Mockito + JaCoCo | 17 | 100% |
+| MS Pacientes | JUnit 5 + Mockito + JaCoCo | 4 | 100% |
+| MS Citas | JUnit 5 + Mockito + JaCoCo | 7 | 96,08% |
+| MS Lista Espera | JUnit 5 + Mockito + JaCoCo | 4 | 100% |
+| MS Reasignacion | JUnit 5 + Mockito + JaCoCo | 6 | 100% |
+| MS Auditoria | JUnit 5 + Mockito + JaCoCo | 5 | 100% |
+| MS Notificaciones | JUnit 5 + Mockito + JaCoCo | 5 | 100% |
 
-Resultado: 50 pruebas aprobadas, sin fallos.
+Resultado: 73 pruebas aprobadas, sin fallos.
+
+El frontend obtuvo ademas 91,21% de ramas y 93,42% de funciones. Maven y
+Vitest tienen umbrales automaticos de 90%; la ejecucion falla si un cambio
+reduce la cobertura por debajo del objetivo.
 
 ## Casos cubiertos
 
@@ -62,4 +66,4 @@ El mismo comando Maven se ejecuta en cada microservicio.
 
 JaCoCo excluye clases de configuracion, DTO, entidades y clases de arranque
 para que la metrica represente controladores, servicios, seguridad y logica de
-integracion. No se excluye codigo de negocio.
+integracion. Los paquetes de excepciones y el codigo de negocio si se miden.

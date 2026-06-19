@@ -2,6 +2,8 @@ package cl.duoc.rednorte.controller;
 
 import cl.duoc.rednorte.security.AuthUserService;
 import cl.duoc.rednorte.security.JwtService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -11,9 +13,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * Expone el registro y login que entregan el JWT firmado al frontend.
+ */
 @RestController
 @RequestMapping("/auth")
 @CrossOrigin(origins = "*")
+@Tag(name = "Autenticacion", description = "Registro e inicio de sesion institucional")
 public class AuthController {
 
     private final JwtService jwtService;
@@ -25,6 +31,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @Operation(summary = "Iniciar sesion")
     public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request) {
         try {
             AuthUserService.AuthUser user = authUserService.authenticate(request.email(), request.password());
@@ -35,6 +42,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
+    @Operation(summary = "Registrar usuario institucional")
     public ResponseEntity<AuthResponse> register(@RequestBody AuthRequest request) {
         try {
             AuthUserService.AuthUser user = authUserService.register(request.name(), request.email(), request.password());
@@ -49,7 +57,7 @@ public class AuthController {
         return new AuthResponse(
                 token,
                 "Bearer",
-                7200,
+                jwtService.expirationSeconds(),
                 user.email(),
                 user.name(),
                 "medico",

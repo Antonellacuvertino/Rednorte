@@ -74,11 +74,6 @@ function AppointmentForm({ onAppointmentCreated }) {
     setLoading(false);
   };
 
-  const getPacienteNombre = (id) => {
-    const paciente = pacientes.find(p => p.id === parseInt(id));
-    return paciente ? `${paciente.nombre} ${paciente.apellido}` : '';
-  };
-
   return (
     <form onSubmit={handleSubmit} className="patient-form">
           <div className="form-grid">

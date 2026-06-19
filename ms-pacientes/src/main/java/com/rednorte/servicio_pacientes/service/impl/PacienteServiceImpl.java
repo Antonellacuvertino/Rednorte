@@ -8,6 +8,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Implementa la persistencia transaccional de pacientes mediante JPA.
+ */
 @Service
 public class PacienteServiceImpl implements PacienteService {
 

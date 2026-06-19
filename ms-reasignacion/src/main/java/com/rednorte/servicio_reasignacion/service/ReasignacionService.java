@@ -3,15 +3,20 @@ package com.rednorte.servicio_reasignacion.service;
 import com.rednorte.servicio_reasignacion.dto.CitaResponse;
 import com.rednorte.servicio_reasignacion.dto.ReasignacionRequest;
 import com.rednorte.servicio_reasignacion.entity.Reasignacion;
+import com.rednorte.servicio_reasignacion.exception.ResourceNotFoundException;
 import com.rednorte.servicio_reasignacion.repository.ReasignacionRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Coordina la actualizacion de la cita y guarda la trazabilidad del cambio.
+ */
 @Service
 public class ReasignacionService {
     private final ReasignacionRepository repository;
@@ -27,10 +32,19 @@ public class ReasignacionService {
         this.citasUrl = citasUrl;
     }
 
+    /**
+     * @return historial ordenado desde el cambio mas reciente
+     */
     public List<Reasignacion> findAll() {
         return repository.findAllByOrderByFechaRegistroDesc();
     }
 
+    /**
+     * Reprograma una cita existente y registra al medico responsable.
+     *
+     * @param request datos de la reasignacion
+     * @return registro de trazabilidad persistido
+     */
     public Reasignacion reprogramar(ReasignacionRequest request) {
         validate(request);
         try {
@@ -38,7 +52,7 @@ public class ReasignacionService {
                     citasUrl + "/api/citas/" + request.citaId(),
                     CitaResponse.class);
             if (cita == null) {
-                throw new IllegalArgumentException("La cita no existe");
+                throw new ResourceNotFoundException("La cita no existe");
             }
 
             restTemplate.put(
@@ -55,6 +69,8 @@ public class ReasignacionService {
             reasignacion.setMotivo(request.motivo().trim());
             reasignacion.setMedicoResponsable(request.medicoResponsable().trim());
             return repository.save(reasignacion);
+        } catch (HttpClientErrorException.NotFound ex) {
+            throw new ResourceNotFoundException("La cita no existe");
         } catch (RestClientException ex) {
             throw new IllegalArgumentException("No fue posible actualizar la cita", ex);
         }

@@ -1,0 +1,18 @@
+name: Nueva funcionalidad
+description: Propone una mejora trazable.
+title: "[FEATURE] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: Necesidad
+      description: Describe el problema del usuario o cliente.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Criterios de aceptacion
+    validations:
+      required: true

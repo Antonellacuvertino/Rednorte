@@ -1,40 +1,49 @@
 REPOSITORIOS EVALUACION 3
 
-Antes de entregar, reemplazar <organizacion> con el usuario u organizacion real
-de GitHub y verificar que los enlaces sean publicos para el docente.
+Usuario GitHub del equipo: Antonellacuvertino.
+Verificar que todos los repositorios sean publicos antes de entregar.
 
 Repositorio principal
-https://github.com/<organizacion>/rednorte-proyecto
+https://github.com/Antonellacuvertino/Rednorte
 Documentacion general, arquitectura, Docker Compose y scripts de ejecucion.
+Estado: PUBLICADO.
 
 Repositorio frontend
-https://github.com/<organizacion>/rednorte-frontend
+https://github.com/Antonellacuvertino/rednorte-frontend
 Aplicacion React, dependencias NPM y pruebas Vitest.
+Estado: PENDIENTE DE CREACION.
 
 Repositorio BFF
-https://github.com/<organizacion>/rednorte-bff
+https://github.com/Antonellacuvertino/rednorte-bff
 API de entrada, JWT, Redis, RabbitMQ y clientes OpenFeign.
+Estado: PENDIENTE DE CREACION.
 
 Repositorio microservicio pacientes
-https://github.com/<organizacion>/rednorte-ms-pacientes
+https://github.com/Antonellacuvertino/rednorte-ms-pacientes
 Persistencia y API REST de pacientes.
+Estado: PENDIENTE DE CREACION.
 
 Repositorio microservicio citas
-https://github.com/<organizacion>/rednorte-ms-citas
+https://github.com/Antonellacuvertino/rednorte-ms-citas
 Persistencia y API REST de agenda medica.
+Estado: PENDIENTE DE CREACION.
 
 Repositorio microservicio lista de espera
-https://github.com/<organizacion>/rednorte-ms-lista-espera
+https://github.com/Antonellacuvertino/rednorte-ms-lista-espera
 Persistencia y priorizacion de pacientes pendientes.
+Estado: PENDIENTE DE CREACION.
 
 Repositorio microservicio reasignacion
-https://github.com/<organizacion>/rednorte-ms-reasignacion
+https://github.com/Antonellacuvertino/rednorte-ms-reasignacion
 Reglas y proceso de reasignacion de atenciones.
+Estado: PENDIENTE DE CREACION.
 
 Repositorio microservicio auditoria
-https://github.com/<organizacion>/rednorte-ms-auditoria
+https://github.com/Antonellacuvertino/rednorte-ms-auditoria
 Consumo RabbitMQ y persistencia de evidencia de eventos.
+Estado: PENDIENTE DE CREACION.
 
 Repositorio microservicio notificaciones
-https://github.com/<organizacion>/rednorte-ms-notificaciones
+https://github.com/Antonellacuvertino/rednorte-ms-notificaciones
 Generacion y consulta de notificaciones operativas.
+Estado: PENDIENTE DE CREACION.

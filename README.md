@@ -1,6 +1,6 @@
 # Hospital Red Norte - Evaluacion 3 Fullstack III
 
-Sistema de gestion hospitalaria basado en React, un BFF Spring Boot y cuatro
+Sistema de gestion hospitalaria basado en React, un BFF Spring Boot y seis
 microservicios con persistencia independiente.
 
 ## Arquitectura
@@ -73,3 +73,5 @@ limpiar-generados.bat
 - [Informe de pruebas](docs/evaluacion3_pruebas.md)
 - [Contrato OpenAPI](docs/openapi-rednorte.yaml)
 - [Repositorios](docs/repositorios_evaluacion3.txt)
+- [GitHub Flow y auditoria](docs/github_flow_y_auditoria.md)
+- [Checklist de cumplimiento](docs/checklist_evaluacion3_cumplimiento.md)

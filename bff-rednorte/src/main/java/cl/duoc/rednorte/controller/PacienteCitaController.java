@@ -14,6 +14,7 @@ import cl.duoc.rednorte.feign.ListaEsperaClient;
 import cl.duoc.rednorte.feign.ReasignacionClient;
 import cl.duoc.rednorte.feign.NotificationClient;
 import cl.duoc.rednorte.messaging.AuditEventPublisher;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.*;
@@ -21,9 +22,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import java.util.*;
 
+/**
+ * Fachada REST del frontend para los seis microservicios de RedNorte.
+ */
 @RestController
 @RequestMapping("/bff")
 @CrossOrigin(origins = "*") // Permite peticiones desde React
+@Tag(name = "BFF RedNorte", description = "Operaciones privadas consumidas por React")
 public class PacienteCitaController {
 
     @Autowired

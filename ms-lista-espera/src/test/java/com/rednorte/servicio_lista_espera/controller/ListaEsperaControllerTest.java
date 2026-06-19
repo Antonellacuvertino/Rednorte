@@ -1,107 +1,38 @@
 package com.rednorte.servicio_lista_espera.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rednorte.servicio_lista_espera.entity.ListaEspera;
-import com.rednorte.servicio_lista_espera.repository.ListaEsperaRepository;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-
 import java.util.List;
-import java.util.Optional;
 
-import static org.mockito.ArgumentMatchers.any;
+import com.rednorte.servicio_lista_espera.entity.ListaEspera;
+import com.rednorte.servicio_lista_espera.service.ListaEsperaService;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.verify;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(ListaEsperaController.class)
 class ListaEsperaControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @MockBean
-    private ListaEsperaRepository listaEsperaRepository;
-
     @Test
-    void getPendientesRetornaListaOrdenada() throws Exception {
-        when(listaEsperaRepository.findPendientesOrdenadasPorPrioridad())
-                .thenReturn(List.of(new ListaEspera(1L, "CARDIOLOGIA", "ALTA")));
+    void delegaTodasLasOperacionesEnElServicio() {
+        ListaEsperaService service = mock(ListaEsperaService.class);
+        ListaEsperaController controller = new ListaEsperaController(service);
+        ListaEspera registro = new ListaEspera(1L, "CARDIOLOGIA", "ALTA");
 
-        mockMvc.perform(get("/api/lista-espera/pendientes"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].pacienteId").value(1))
-                .andExpect(jsonPath("$[0].especialidad").value("CARDIOLOGIA"));
-    }
+        when(service.listar()).thenReturn(List.of(registro));
+        when(service.listarPendientes()).thenReturn(List.of(registro));
+        when(service.listarPendientesPorEspecialidad("CARDIOLOGIA")).thenReturn(List.of(registro));
+        when(service.listarPorPaciente(1L)).thenReturn(List.of(registro));
+        when(service.crear(registro)).thenReturn(registro);
+        when(service.atender(1L)).thenReturn(registro);
+        when(service.cancelar(1L)).thenReturn(registro);
 
-    @Test
-    void crearListaEsperaGuardaRegistroPendiente() throws Exception {
-        ListaEspera registro = new ListaEspera(2L, "PEDIATRIA", "MEDIA");
-        registro.setId(10L);
-
-        when(listaEsperaRepository.save(any(ListaEspera.class))).thenReturn(registro);
-
-        mockMvc.perform(post("/api/lista-espera")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(registro)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(10))
-                .andExpect(jsonPath("$.estado").value("PENDIENTE"));
-    }
-
-    @Test
-    void atenderListaEsperaMarcaComoAtendido() throws Exception {
-        ListaEspera registro = new ListaEspera(3L, "TRAUMATOLOGIA", "BAJA");
-
-        when(listaEsperaRepository.findById(1L)).thenReturn(Optional.of(registro));
-        when(listaEsperaRepository.save(any(ListaEspera.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        mockMvc.perform(put("/api/lista-espera/1/atender"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.estado").value("ATENDIDO"));
-    }
-
-    @Test
-    void consultaFiltrosYCancelaRegistro() throws Exception {
-        ListaEspera registro = new ListaEspera(4L, "CARDIOLOGIA", "ALTA");
-        when(listaEsperaRepository.findAll()).thenReturn(List.of(registro));
-        when(listaEsperaRepository.findPendientesPorEspecialidadOrdenadasPorPrioridad("CARDIOLOGIA"))
-                .thenReturn(List.of(registro));
-        when(listaEsperaRepository.findByPacienteId(4L)).thenReturn(List.of(registro));
-        when(listaEsperaRepository.findById(4L)).thenReturn(Optional.of(registro));
-        when(listaEsperaRepository.save(any(ListaEspera.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        mockMvc.perform(get("/api/lista-espera")).andExpect(status().isOk());
-        mockMvc.perform(get("/api/lista-espera/pendientes/CARDIOLOGIA")).andExpect(status().isOk());
-        mockMvc.perform(get("/api/lista-espera/paciente/4")).andExpect(status().isOk());
-        mockMvc.perform(put("/api/lista-espera/4/cancelar"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.estado").value("CANCELADO"));
-    }
-
-    @Test
-    void retornaNotFoundYEliminaExistente() throws Exception {
-        when(listaEsperaRepository.findById(99L)).thenReturn(Optional.empty());
-        when(listaEsperaRepository.existsById(1L)).thenReturn(true);
-        when(listaEsperaRepository.existsById(99L)).thenReturn(false);
-
-        mockMvc.perform(put("/api/lista-espera/99/atender")).andExpect(status().isNotFound());
-        mockMvc.perform(put("/api/lista-espera/99/cancelar")).andExpect(status().isNotFound());
-        mockMvc.perform(delete("/api/lista-espera/1")).andExpect(status().isOk());
-        mockMvc.perform(delete("/api/lista-espera/99")).andExpect(status().isNotFound());
-
-        verify(listaEsperaRepository).deleteById(1L);
+        assertEquals(1, controller.getAllListaEspera().getBody().size());
+        assertEquals(1, controller.getListaEsperaPendiente().getBody().size());
+        assertEquals(1, controller.getListaEsperaPendientePorEspecialidad("CARDIOLOGIA").getBody().size());
+        assertEquals(1, controller.getListaEsperaPorPaciente(1L).getBody().size());
+        assertEquals(201, controller.crearListaEspera(registro).getStatusCode().value());
+        assertEquals(registro, controller.atenderListaEspera(1L).getBody());
+        assertEquals(registro, controller.cancelarListaEspera(1L).getBody());
+        assertEquals(204, controller.eliminarListaEspera(1L).getStatusCode().value());
     }
 }

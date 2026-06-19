@@ -2,7 +2,12 @@ package com.RedNorte.servicio_citas.controller;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import com.RedNorte.servicio_citas.model.Cita;
+import com.RedNorte.servicio_citas.service.CitaService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -10,60 +15,79 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.http.ResponseEntity;
 
-import com.RedNorte.servicio_citas.factory.CitaFactory;
-import com.RedNorte.servicio_citas.model.Cita;
-import com.RedNorte.servicio_citas.repository.CitaRepository;
-
+/**
+ * Expone la agenda medica y la reprogramacion de citas.
+ */
 @RestController
 @RequestMapping("/api/citas")
+@Tag(name = "Citas", description = "Agenda y reprogramacion de citas medicas")
 public class CitaController {
 
-    @Autowired
-    private CitaRepository repository;
+    private final CitaService service;
 
-    @Autowired
-    private CitaFactory citaFactory;
+    public CitaController(CitaService service) {
+        this.service = service;
+    }
 
+    /**
+     * Lista todas las citas.
+     *
+     * @return citas registradas
+     */
     @GetMapping
+    @Operation(summary = "Listar citas")
     public List<Cita> listar() {
-        return repository.findAll();
+        return service.listar();
     }
 
+    /**
+     * Lista las citas asociadas a un paciente.
+     *
+     * @param pacienteId identificador del paciente
+     * @return citas del paciente
+     */
     @GetMapping("/paciente/{pacienteId}")
+    @Operation(summary = "Listar citas por paciente")
     public List<Cita> listarPorPaciente(@PathVariable Long pacienteId) {
-        return repository.findByPacienteId(pacienteId);
+        return service.listarPorPaciente(pacienteId);
     }
 
+    /**
+     * Obtiene una cita por id.
+     *
+     * @param id identificador de la cita
+     * @return cita encontrada
+     */
     @GetMapping("/{id}")
+    @Operation(summary = "Buscar cita por id")
     public ResponseEntity<Cita> buscarPorId(@PathVariable Long id) {
-        return repository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        return ResponseEntity.ok(service.buscarPorId(id));
     }
 
+    /**
+     * Agenda una cita aplicando la prioridad definida por su tipo.
+     *
+     * @param tipo tipo de cita
+     * @param datosCita datos de agenda
+     * @return cita creada
+     */
     @PostMapping("/{tipo}")
-    public Cita agendar(@PathVariable String tipo, @RequestBody Cita datosCita) {
-        // Implementación del Factory Method
-        Cita nuevaCita = citaFactory.crearCita(
-            tipo, 
-            datosCita.getPacienteId(), 
-            datosCita.getEspecialidad(), 
-            datosCita.getFecha(),
-            datosCita.getHora()
-        );
-        return repository.save(nuevaCita);
+    @Operation(summary = "Agendar cita")
+    public ResponseEntity<Cita> agendar(@PathVariable String tipo, @RequestBody Cita datosCita) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.agendar(tipo, datosCita));
     }
 
+    /**
+     * Cambia la fecha y hora de una cita.
+     *
+     * @param id identificador de la cita
+     * @param cambios nueva fecha y hora
+     * @return cita actualizada
+     */
     @PutMapping("/{id}/reprogramar")
+    @Operation(summary = "Reprogramar cita")
     public ResponseEntity<Cita> reprogramar(@PathVariable Long id, @RequestBody Cita cambios) {
-        return repository.findById(id)
-                .map(cita -> {
-                    cita.setFecha(cambios.getFecha());
-                    cita.setHora(cambios.getHora());
-                    return ResponseEntity.ok(repository.save(cita));
-                })
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        return ResponseEntity.ok(service.reprogramar(id, cambios));
     }
 }

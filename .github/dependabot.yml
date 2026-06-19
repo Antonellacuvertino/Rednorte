@@ -1,0 +1,34 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+  - package-ecosystem: maven
+    directory: /bff-rednorte
+    schedule:
+      interval: weekly
+  - package-ecosystem: maven
+    directory: /ms-pacientes
+    schedule:
+      interval: weekly
+  - package-ecosystem: maven
+    directory: /ms-citas
+    schedule:
+      interval: weekly
+  - package-ecosystem: maven
+    directory: /ms-lista-espera
+    schedule:
+      interval: weekly
+  - package-ecosystem: maven
+    directory: /ms-reasignacion
+    schedule:
+      interval: weekly
+  - package-ecosystem: maven
+    directory: /ms-auditoria
+    schedule:
+      interval: weekly
+  - package-ecosystem: maven
+    directory: /ms-notificaciones
+    schedule:
+      interval: weekly

@@ -31,10 +31,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (authorization != null && authorization.startsWith("Bearer ")) {
             try {
                 Claims claims = jwtService.validate(authorization.substring(7));
+                String role = claims.get("role", String.class);
+                if (role == null || role.isBlank()) {
+                    throw new IllegalArgumentException("El token no contiene un rol valido");
+                }
                 var auth = new UsernamePasswordAuthenticationToken(
                         claims.getSubject(),
                         null,
-                        List.of(new SimpleGrantedAuthority("ROLE_MEDICO")));
+                        List.of(new SimpleGrantedAuthority("ROLE_" + role)));
                 SecurityContextHolder.getContext().setAuthentication(auth);
             } catch (RuntimeException ex) {
                 SecurityContextHolder.clearContext();

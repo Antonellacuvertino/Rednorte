@@ -9,3 +9,8 @@ mvnw.cmd test
 ```
 
 Puerto: `8084`. API: `/api/reasignaciones`.
+
+Swagger: `http://localhost:8084/swagger-ui.html`.
+Los endpoints de negocio requieren JWT con rol `MEDICO`.
+El token se propaga al microservicio Citas durante la reprogramacion.
+JaCoCo exige al menos 90% y genera `target/site/jacoco/index.html`.

@@ -1,0 +1,11 @@
+package com.rednorte.servicio_pacientes.exception;
+
+/**
+ * Indica que el recurso solicitado no existe en el microservicio.
+ */
+public class ResourceNotFoundException extends RuntimeException {
+
+    public ResourceNotFoundException(String message) {
+        super(message);
+    }
+}

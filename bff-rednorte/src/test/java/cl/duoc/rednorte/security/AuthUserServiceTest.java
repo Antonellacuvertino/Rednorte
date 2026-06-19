@@ -44,5 +44,11 @@ class AuthUserServiceTest {
                 () -> service.authenticate("medico@redsalud.cl", "incorrecta"));
         assertThrows(IllegalArgumentException.class,
                 () -> service.register("Duplicado", "medico@redsalud.cl", "otra1234"));
+        assertThrows(IllegalArgumentException.class,
+                () -> service.register(null, "nuevo@redsalud.cl", "segura123"));
+        assertThrows(IllegalArgumentException.class,
+                () -> service.register("Sin correo", null, "segura123"));
+        assertThrows(IllegalArgumentException.class,
+                () -> service.authenticate(null, null));
     }
 }

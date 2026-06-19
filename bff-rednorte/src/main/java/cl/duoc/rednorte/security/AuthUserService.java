@@ -7,6 +7,9 @@ import org.springframework.stereotype.Service;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Gestiona el registro y autenticacion de usuarios institucionales.
+ */
 @Service
 public class AuthUserService {
 
@@ -24,6 +27,11 @@ public class AuthUserService {
         register(demoName, demoEmail, demoPassword);
     }
 
+    /**
+     * Registra un usuario con contrasena BCrypt.
+     *
+     * @return usuario institucional creado
+     */
     public AuthUser register(String name, String email, String rawPassword) {
         String normalizedEmail = normalizeEmail(email);
         validate(name, normalizedEmail, rawPassword);
@@ -36,6 +44,11 @@ public class AuthUserService {
         return user;
     }
 
+    /**
+     * Valida correo y contrasena contra el hash almacenado.
+     *
+     * @return usuario autenticado
+     */
     public AuthUser authenticate(String email, String rawPassword) {
         AuthUser user = users.get(normalizeEmail(email));
         if (user == null || rawPassword == null || !passwordEncoder.matches(rawPassword, user.passwordHash())) {
