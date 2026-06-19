@@ -16,11 +16,16 @@ $repositories = [ordered]@{
     "ms-notificaciones" = "rednorte-ms-notificaciones"
 }
 
-if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+$ghCommand = Get-Command gh -ErrorAction SilentlyContinue
+$ghPath = if ($ghCommand) {
+    $ghCommand.Source
+} elseif (Test-Path "C:\Program Files\GitHub CLI\gh.exe") {
+    "C:\Program Files\GitHub CLI\gh.exe"
+} else {
     throw "GitHub CLI no esta instalado. Instale con: winget install --id GitHub.cli"
 }
 
-gh auth status
+& $ghPath auth status
 if ($LASTEXITCODE -ne 0) {
     throw "GitHub CLI no esta autenticado. Ejecute: gh auth login"
 }
@@ -30,9 +35,9 @@ foreach ($entry in $repositories.GetEnumerator()) {
     $url = "https://github.com/$GitHubUser/$($entry.Value).git"
     $visibility = if ($Private) { "--private" } else { "--public" }
 
-    gh repo view "$GitHubUser/$($entry.Value)" --json name | Out-Null
+    & $ghPath repo view "$GitHubUser/$($entry.Value)" --json name | Out-Null
     if ($LASTEXITCODE -ne 0) {
-        gh repo create "$GitHubUser/$($entry.Value)" $visibility --description "Componente RedNorte Evaluacion 3"
+        & $ghPath repo create "$GitHubUser/$($entry.Value)" $visibility --description "Componente RedNorte Evaluacion 3"
         if ($LASTEXITCODE -ne 0) {
             throw "No fue posible crear $($entry.Value)."
         }
