@@ -146,7 +146,8 @@ test('informa fallos al cargar, seleccionar y crear pacientes', async () => {
 
   api.fetchPatientWithCitas.mockRejectedValueOnce(new Error('detalle'));
   fireEvent.click(screen.getByText('Ana Lopez'));
-  await waitFor(() => expect(screen.getByText(/No se pudieron cargar los detalles/i)).toBeTruthy());
+  await waitFor(() => expect(screen.getByText(/Control anual/i)).toBeTruthy());
+  expect(screen.getByText(/Sin citas registradas/i)).toBeTruthy();
 
   api.createPatient.mockRejectedValueOnce(new Error('guardar'));
   fireEvent.change(screen.getByPlaceholderText('12345678-9'), {
@@ -156,4 +157,33 @@ test('informa fallos al cargar, seleccionar y crear pacientes', async () => {
   fireEvent.change(screen.getByPlaceholderText('Apellido'), { target: { value: 'Perez' } });
   fireEvent.click(screen.getByRole('button', { name: /Agregar paciente/i }));
   await waitFor(() => expect(screen.getByText(/No se pudo agregar el paciente/i)).toBeTruthy());
+});
+
+test('mantiene el paciente creado aunque falle la recarga de datos relacionados', async () => {
+  localStorage.setItem('rednorte-user', JSON.stringify({ token: 'jwt', name: 'Dra. Ana' }));
+  const createdPatient = {
+    id: 2,
+    nombre: 'Luis',
+    apellido: 'Perez',
+    rut: '22222222-2',
+    historialClinico: 'Ingreso inicial'
+  };
+  api.fetchPatients.mockResolvedValueOnce([]);
+  api.fetchPatients.mockRejectedValueOnce(new Error('recarga'));
+  api.fetchPatientWithCitas.mockRejectedValue(new Error('citas apagado'));
+  api.createPatient.mockResolvedValueOnce(createdPatient);
+
+  render(<App />);
+  await waitFor(() => expect(screen.getByText(/No hay pacientes disponibles/i)).toBeTruthy());
+
+  fireEvent.change(screen.getByPlaceholderText('12345678-9'), {
+    target: { value: createdPatient.rut }
+  });
+  fireEvent.change(screen.getByPlaceholderText('Nombre'), { target: { value: createdPatient.nombre } });
+  fireEvent.change(screen.getByPlaceholderText('Apellido'), { target: { value: createdPatient.apellido } });
+  fireEvent.click(screen.getByRole('button', { name: /Agregar paciente/i }));
+
+  await waitFor(() => expect(screen.getByText(/Paciente agregado correctamente/i)).toBeTruthy());
+  expect(screen.getAllByText(/Luis Perez/i).length).toBeGreaterThan(0);
+  expect(api.fetchPatientWithCitas).not.toHaveBeenCalled();
 });

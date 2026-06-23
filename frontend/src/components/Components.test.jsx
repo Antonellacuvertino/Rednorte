@@ -117,7 +117,7 @@ test('AppointmentForm crea una cita', async () => {
   await waitFor(() => expect(screen.getByRole('option', { name: /Ana Lopez/i })).toBeTruthy());
   fireEvent.change(screen.getByLabelText(/Paciente/i), { target: { value: '1' } });
   fireEvent.change(screen.getByLabelText(/Especialidad/i), { target: { value: 'CARDIOLOGIA' } });
-  fireEvent.change(screen.getByLabelText(/Fecha/i), { target: { value: '2026-06-20' } });
+  fireEvent.change(screen.getByLabelText(/Fecha/i), { target: { value: '2026-07-20' } });
   fireEvent.change(screen.getByLabelText(/Hora/i), { target: { value: '10:00' } });
   fireEvent.change(screen.getByLabelText(/Motivo/i), { target: { value: 'Control' } });
   fireEvent.click(screen.getByRole('button', { name: /Agendar Cita/i }));

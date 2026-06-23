@@ -96,6 +96,21 @@ class PacienteCitaControllerTest {
     }
 
     @Test
+    void testGetPacienteCitasDevuelveFichaAunqueCitasFalle() throws Exception {
+        PacienteDTO paciente = new PacienteDTO(1L, "Juan", "Perez", "12345678-9", "Historial limpio");
+
+        when(pacienteClient.getPacienteById(1L)).thenReturn(paciente);
+        when(citaClient.getCitasByPacienteId(1L)).thenThrow(new RuntimeException("citas apagado"));
+
+        mockMvc.perform(get("/bff/paciente-citas/1")
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.paciente.rut").value("12345678-9"))
+                .andExpect(jsonPath("$.citas").isArray())
+                .andExpect(jsonPath("$.citas").isEmpty());
+    }
+
+    @Test
     void testGetPacienteCitasNotFound() throws Exception {
         when(pacienteClient.getPacienteById(1L)).thenReturn(null);
 

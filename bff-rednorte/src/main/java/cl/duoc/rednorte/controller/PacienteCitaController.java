@@ -16,7 +16,6 @@ import cl.duoc.rednorte.feign.NotificationClient;
 import cl.duoc.rednorte.messaging.AuditEventPublisher;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,7 +52,6 @@ public class PacienteCitaController {
     private NotificationClient notificationClient;
 
     @GetMapping("/pacientes")
-    @Cacheable("pacientes")
     public List<PacienteDTO> getPacientes() {
         return pacienteClient.getAllPacientes();
     }
@@ -67,14 +65,18 @@ public class PacienteCitaController {
     }
 
     @GetMapping("/paciente-citas/{id}")
-    @Cacheable(value = "paciente-citas", key = "#id")
     public ResponseEntity<Map<String, Object>> getPacienteConCitas(@PathVariable Long id) {
         PacienteDTO paciente = pacienteClient.getPacienteById(id);
         if (paciente == null) {
             return ResponseEntity.notFound().build();
         }
 
-        List<CitaDTO> citas = citaClient.getCitasByPacienteId(id);
+        List<CitaDTO> citas;
+        try {
+            citas = citaClient.getCitasByPacienteId(id);
+        } catch (RuntimeException ex) {
+            citas = Collections.emptyList();
+        }
 
         Map<String, Object> response = new HashMap<>();
         response.put("paciente", paciente);

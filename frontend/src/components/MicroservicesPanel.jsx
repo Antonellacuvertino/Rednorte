@@ -12,9 +12,10 @@ import {
 
 const especialidades = ['CARDIOLOGIA', 'PEDIATRIA', 'TRAUMATOLOGIA', 'GINECOLOGIA', 'OFTALMOLOGIA', 'DERMATOLOGIA'];
 const prioridades = ['ALTA', 'MEDIA', 'BAJA'];
+const emptyPatients = [];
 
-function MicroservicesPanel({ showNotifications = true, autoRefresh = false }) {
-  const [patients, setPatients] = useState([]);
+function MicroservicesPanel({ patients: sharedPatients = emptyPatients, showNotifications = true, autoRefresh = false }) {
+  const [patients, setPatients] = useState(sharedPatients);
   const [waitingList, setWaitingList] = useState([]);
   const [auditEvents, setAuditEvents] = useState([]);
   const [notifications, setNotifications] = useState([]);
@@ -31,17 +32,21 @@ function MicroservicesPanel({ showNotifications = true, autoRefresh = false }) {
   const loadData = async () => {
     setLoading(true);
     try {
+      let patientSyncFailed = false;
       const [patientData, waitingData, auditData, notificationData] = await Promise.all([
-        fetchPatients(),
-        fetchListaEsperaPendiente(),
-        fetchAuditEvents(),
-        showNotifications ? fetchNotifications() : Promise.resolve([])
+        fetchPatients().catch(() => {
+          patientSyncFailed = true;
+          return sharedPatients;
+        }),
+        fetchListaEsperaPendiente().catch(() => []),
+        fetchAuditEvents().catch(() => []),
+        showNotifications ? fetchNotifications().catch(() => []) : Promise.resolve([])
       ]);
       setPatients(patientData || []);
       setWaitingList(waitingData || []);
       setAuditEvents(auditData || []);
       setNotifications(notificationData || []);
-      setError('');
+      setError(patientSyncFailed ? 'No se pudo sincronizar la informacion operativa.' : '');
     } catch {
       setError('No se pudo sincronizar la informacion operativa.');
     } finally {
@@ -55,6 +60,10 @@ function MicroservicesPanel({ showNotifications = true, autoRefresh = false }) {
     const interval = window.setInterval(loadData, 30000);
     return () => window.clearInterval(interval);
   }, [autoRefresh, showNotifications]);
+
+  useEffect(() => {
+    setPatients(sharedPatients);
+  }, [sharedPatients]);
 
   const createWaitingRecord = async (event) => {
     event.preventDefault();

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { createCita, fetchPatients } from '../hooks/usePatientApi';
 
-function AppointmentForm({ onAppointmentCreated }) {
+const emptyPatients = [];
+
+function AppointmentForm({ patients = emptyPatients, onAppointmentCreated }) {
   const [formData, setFormData] = useState({
     pacienteId: '',
     especialidad: '',
@@ -10,7 +12,7 @@ function AppointmentForm({ onAppointmentCreated }) {
     motivo: ''
   });
   const [loading, setLoading] = useState(false);
-  const [pacientes, setPacientes] = useState([]);
+  const [pacientes, setPacientes] = useState(patients);
   const [especialidades] = useState([
     'CARDIOLOGIA',
     'PEDIATRIA',
@@ -23,6 +25,10 @@ function AppointmentForm({ onAppointmentCreated }) {
   useEffect(() => {
     loadPacientes();
   }, []);
+
+  useEffect(() => {
+    setPacientes(patients);
+  }, [patients]);
 
   const loadPacientes = async () => {
     try {

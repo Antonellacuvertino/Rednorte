@@ -17,8 +17,12 @@ function PatientForm({ onSubmit, saving }) {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    await onSubmit(form);
-    setForm(initialForm);
+    try {
+      await onSubmit(form);
+      setForm(initialForm);
+    } catch {
+      // El contenedor muestra el error; conservamos los datos para corregir o reintentar.
+    }
   };
 
   return (

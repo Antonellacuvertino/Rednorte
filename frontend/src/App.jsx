@@ -90,7 +90,7 @@ function App() {
   };
 
   useEffect(() => {
-    if (user && activePage === 'pacientes') loadPatients();
+    if (user) loadPatients();
   }, [activePage, user]);
 
   const filteredPatients = useMemo(() => {
@@ -124,7 +124,14 @@ function App() {
       setCitas(data.citas || []);
       setError('');
     } catch {
-      setError('No se pudieron cargar los detalles del paciente.');
+      const patient = patients.find((item) => item.id === patientId);
+      if (patient) {
+        setSelectedPatient(patient);
+        setCitas([]);
+        setError('');
+      } else {
+        setError('No se pudieron cargar los detalles del paciente.');
+      }
     } finally {
       setLoading(false);
     }
@@ -134,12 +141,23 @@ function App() {
     setSaving(true);
     try {
       const created = await createPatient(patient);
-      await loadPatients();
-      await handleSelectPatient(created.id);
+      setPatients((current) => {
+        const withoutCreated = current.filter((item) => item.id !== created.id);
+        return [...withoutCreated, created];
+      });
+      setSelectedPatient(created);
+      setCitas([]);
       setSuccess('Paciente agregado correctamente.');
       setError('');
-    } catch {
+      try {
+        const data = await fetchPatients();
+        setPatients(data || []);
+      } catch {
+        // El paciente ya fue creado; mantenemos la ficha local aunque falle la recarga.
+      }
+    } catch (createError) {
       setError('No se pudo agregar el paciente.');
+      throw createError;
     } finally {
       setSaving(false);
     }
@@ -212,6 +230,7 @@ function App() {
                   </div>
                 </div>
                 <AppointmentForm
+                  patients={patients}
                   onAppointmentCreated={() => setAgendaVersion((version) => version + 1)}
                 />
               </section>
@@ -254,7 +273,11 @@ function App() {
             </main>
           </>
         ) : activePage === 'lista-espera' ? (
-          <MicroservicesPanel showNotifications={settings.showNotifications} autoRefresh={settings.autoRefresh} />
+          <MicroservicesPanel
+            patients={patients}
+            showNotifications={settings.showNotifications}
+            autoRefresh={settings.autoRefresh}
+          />
         ) : activePage === 'reportes' ? (
           <section className="report-band">
             <div className="settings-intro">
