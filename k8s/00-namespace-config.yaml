@@ -1,0 +1,34 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: rednorte
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rednorte-secrets
+  namespace: rednorte
+type: Opaque
+stringData:
+  JWT_SECRET: rednorte-super-secret-key-para-firmar-jwt-real-2026
+  RABBITMQ_USERNAME: guest
+  RABBITMQ_PASSWORD: guest
+  DEMO_USER_EMAIL: medico@redsalud.cl
+  DEMO_USER_PASSWORD: salud1234
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rednorte-config
+  namespace: rednorte
+data:
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  RABBITMQ_HOST: rabbitmq
+  RABBITMQ_PORT: "5672"
+  MS_PACIENTES_URL: http://ms-pacientes:8081
+  MS_CITAS_URL: http://ms-citas:8082
+  MS_LISTA_ESPERA_URL: http://ms-lista-espera:8083
+  MS_REASIGNACION_URL: http://ms-reasignacion:8084
+  MS_AUDITORIA_URL: http://ms-auditoria:8086
+  MS_NOTIFICACIONES_URL: http://ms-notificaciones:8087

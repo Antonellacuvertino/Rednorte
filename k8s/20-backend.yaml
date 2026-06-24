@@ -1,0 +1,431 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-pacientes
+  namespace: rednorte
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-pacientes
+  template:
+    metadata:
+      labels:
+        app: ms-pacientes
+    spec:
+      containers:
+        - name: ms-pacientes
+          image: public.ecr.aws/docker/library/eclipse-temurin:17-jre-alpine
+          ports:
+            - containerPort: 8081
+          env:
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: rednorte-secrets
+                  key: JWT_SECRET
+          readinessProbe:
+            tcpSocket:
+              port: 8081
+            initialDelaySeconds: 30
+          livenessProbe:
+            tcpSocket:
+              port: 8081
+            initialDelaySeconds: 60
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ms-pacientes
+  namespace: rednorte
+spec:
+  selector:
+    app: ms-pacientes
+  ports:
+    - port: 8081
+      targetPort: 8081
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-citas
+  namespace: rednorte
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-citas
+  template:
+    metadata:
+      labels:
+        app: ms-citas
+    spec:
+      containers:
+        - name: ms-citas
+          image: public.ecr.aws/docker/library/eclipse-temurin:17-jre-alpine
+          ports:
+            - containerPort: 8082
+          env:
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: rednorte-secrets
+                  key: JWT_SECRET
+          readinessProbe:
+            tcpSocket:
+              port: 8082
+            initialDelaySeconds: 30
+          livenessProbe:
+            tcpSocket:
+              port: 8082
+            initialDelaySeconds: 60
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ms-citas
+  namespace: rednorte
+spec:
+  selector:
+    app: ms-citas
+  ports:
+    - port: 8082
+      targetPort: 8082
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-lista-espera
+  namespace: rednorte
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-lista-espera
+  template:
+    metadata:
+      labels:
+        app: ms-lista-espera
+    spec:
+      containers:
+        - name: ms-lista-espera
+          image: public.ecr.aws/docker/library/eclipse-temurin:17-jre-alpine
+          ports:
+            - containerPort: 8083
+          env:
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: rednorte-secrets
+                  key: JWT_SECRET
+          readinessProbe:
+            tcpSocket:
+              port: 8083
+            initialDelaySeconds: 30
+          livenessProbe:
+            tcpSocket:
+              port: 8083
+            initialDelaySeconds: 60
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ms-lista-espera
+  namespace: rednorte
+spec:
+  selector:
+    app: ms-lista-espera
+  ports:
+    - port: 8083
+      targetPort: 8083
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-reasignacion
+  namespace: rednorte
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-reasignacion
+  template:
+    metadata:
+      labels:
+        app: ms-reasignacion
+    spec:
+      containers:
+        - name: ms-reasignacion
+          image: public.ecr.aws/docker/library/eclipse-temurin:17-jre-alpine
+          ports:
+            - containerPort: 8084
+          env:
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: rednorte-secrets
+                  key: JWT_SECRET
+            - name: MS_CITAS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: rednorte-config
+                  key: MS_CITAS_URL
+          readinessProbe:
+            tcpSocket:
+              port: 8084
+            initialDelaySeconds: 30
+          livenessProbe:
+            tcpSocket:
+              port: 8084
+            initialDelaySeconds: 60
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ms-reasignacion
+  namespace: rednorte
+spec:
+  selector:
+    app: ms-reasignacion
+  ports:
+    - port: 8084
+      targetPort: 8084
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-auditoria
+  namespace: rednorte
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-auditoria
+  template:
+    metadata:
+      labels:
+        app: ms-auditoria
+    spec:
+      containers:
+        - name: ms-auditoria
+          image: public.ecr.aws/docker/library/eclipse-temurin:17-jre-alpine
+          ports:
+            - containerPort: 8086
+          envFrom:
+            - configMapRef:
+                name: rednorte-config
+          env:
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: rednorte-secrets
+                  key: JWT_SECRET
+            - name: RABBITMQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: rednorte-secrets
+                  key: RABBITMQ_USERNAME
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rednorte-secrets
+                  key: RABBITMQ_PASSWORD
+          readinessProbe:
+            tcpSocket:
+              port: 8086
+            initialDelaySeconds: 30
+          livenessProbe:
+            tcpSocket:
+              port: 8086
+            initialDelaySeconds: 60
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ms-auditoria
+  namespace: rednorte
+spec:
+  selector:
+    app: ms-auditoria
+  ports:
+    - port: 8086
+      targetPort: 8086
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-notificaciones
+  namespace: rednorte
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-notificaciones
+  template:
+    metadata:
+      labels:
+        app: ms-notificaciones
+    spec:
+      containers:
+        - name: ms-notificaciones
+          image: public.ecr.aws/docker/library/eclipse-temurin:17-jre-alpine
+          ports:
+            - containerPort: 8087
+          envFrom:
+            - configMapRef:
+                name: rednorte-config
+          env:
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: rednorte-secrets
+                  key: JWT_SECRET
+            - name: RABBITMQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: rednorte-secrets
+                  key: RABBITMQ_USERNAME
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rednorte-secrets
+                  key: RABBITMQ_PASSWORD
+          readinessProbe:
+            tcpSocket:
+              port: 8087
+            initialDelaySeconds: 30
+          livenessProbe:
+            tcpSocket:
+              port: 8087
+            initialDelaySeconds: 60
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ms-notificaciones
+  namespace: rednorte
+spec:
+  selector:
+    app: ms-notificaciones
+  ports:
+    - port: 8087
+      targetPort: 8087
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bff-rednorte
+  namespace: rednorte
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: bff-rednorte
+  template:
+    metadata:
+      labels:
+        app: bff-rednorte
+    spec:
+      containers:
+        - name: bff-rednorte
+          image: public.ecr.aws/docker/library/eclipse-temurin:17-jre-alpine
+          ports:
+            - containerPort: 8085
+          envFrom:
+            - configMapRef:
+                name: rednorte-config
+          env:
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: rednorte-secrets
+                  key: JWT_SECRET
+            - name: DEMO_USER_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: rednorte-secrets
+                  key: DEMO_USER_EMAIL
+            - name: DEMO_USER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rednorte-secrets
+                  key: DEMO_USER_PASSWORD
+            - name: RABBITMQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: rednorte-secrets
+                  key: RABBITMQ_USERNAME
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rednorte-secrets
+                  key: RABBITMQ_PASSWORD
+          readinessProbe:
+            tcpSocket:
+              port: 8085
+            initialDelaySeconds: 35
+          livenessProbe:
+            tcpSocket:
+              port: 8085
+            initialDelaySeconds: 70
+          resources:
+            requests:
+              cpu: 150m
+              memory: 384Mi
+            limits:
+              cpu: 750m
+              memory: 768Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bff-rednorte
+  namespace: rednorte
+spec:
+  selector:
+    app: bff-rednorte
+  ports:
+    - port: 8085
+      targetPort: 8085

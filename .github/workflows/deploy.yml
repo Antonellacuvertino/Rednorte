@@ -1,0 +1,104 @@
+name: Deploy RedNorte to EKS
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - deploy
+      - feature/evaluacion3-calidad-seguridad
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  build-push-deploy:
+    name: Build, push and deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: latest
+
+      - name: Build and push images
+        shell: bash
+        env:
+          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+        run: |
+          set -euo pipefail
+          services=(
+            "frontend:rednorte-frontend"
+            "bff-rednorte:rednorte-bff-rednorte"
+            "ms-pacientes:rednorte-ms-pacientes"
+            "ms-citas:rednorte-ms-citas"
+            "ms-lista-espera:rednorte-ms-lista-espera"
+            "ms-reasignacion:rednorte-ms-reasignacion"
+            "ms-auditoria:rednorte-ms-auditoria"
+            "ms-notificaciones:rednorte-ms-notificaciones"
+          )
+
+          for item in "${services[@]}"; do
+            IFS=":" read -r context repo <<< "$item"
+            image="$ECR_REGISTRY/$repo:$IMAGE_TAG"
+            latest="$ECR_REGISTRY/$repo:latest"
+            docker build -t "$image" -t "$latest" "$context"
+            docker push "$image"
+            docker push "$latest"
+          done
+
+      - name: Configure kubectl context
+        run: aws eks update-kubeconfig --region "$AWS_REGION" --name "$EKS_CLUSTER_NAME"
+
+      - name: Apply Kubernetes manifests
+        run: kubectl apply -f k8s/
+
+      - name: Update images and wait for rollout
+        shell: bash
+        env:
+          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+        run: |
+          set -euo pipefail
+          updates=(
+            "frontend:frontend:rednorte-frontend"
+            "bff-rednorte:bff-rednorte:rednorte-bff-rednorte"
+            "ms-pacientes:ms-pacientes:rednorte-ms-pacientes"
+            "ms-citas:ms-citas:rednorte-ms-citas"
+            "ms-lista-espera:ms-lista-espera:rednorte-ms-lista-espera"
+            "ms-reasignacion:ms-reasignacion:rednorte-ms-reasignacion"
+            "ms-auditoria:ms-auditoria:rednorte-ms-auditoria"
+            "ms-notificaciones:ms-notificaciones:rednorte-ms-notificaciones"
+          )
+
+          for item in "${updates[@]}"; do
+            IFS=":" read -r deployment container repo <<< "$item"
+            kubectl set image "deployment/$deployment" "$container=$ECR_REGISTRY/$repo:$IMAGE_TAG" -n rednorte
+          done
+
+          for item in "${updates[@]}"; do
+            IFS=":" read -r deployment _container _repo <<< "$item"
+            kubectl rollout status "deployment/$deployment" -n rednorte --timeout=240s
+          done
+
+      - name: Show frontend endpoint
+        run: kubectl get service frontend -n rednorte

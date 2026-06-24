@@ -1,0 +1,7 @@
+target
+data
+*.log
+run*.log
+.git
+.idea
+.vscode
